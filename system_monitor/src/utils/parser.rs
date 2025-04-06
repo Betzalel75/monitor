@@ -1,6 +1,6 @@
 
 
-pub fn get_cpu_model(buffer: &str)-> String{
+pub fn parse_cpu_model(buffer: &str)-> String{
     let mut cpu_model = String::new();
     let mut lines = buffer.lines();
     while let Some(line) = lines.next() {
@@ -12,9 +12,9 @@ pub fn get_cpu_model(buffer: &str)-> String{
     cpu_model
 }
 
-pub fn parse_memory_line(line: &str) -> u64 {
+pub fn parse_memory_line(line: &str) -> f32 {
     line.split_whitespace()
         .nth(1)
-        .and_then(|n| n.parse::<u64>().ok())
-        .unwrap_or(0)
+        .and_then(|n| n.parse::<f32>().ok())
+        .unwrap_or(0.0)
 }

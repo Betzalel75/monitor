@@ -1,4 +1,4 @@
-use crate::{models::system::SystemInfo, utils::{self, parser::get_cpu_model}};
+use crate::{models::system::SystemInfo, utils::{self, parser::parse_cpu_model}};
 use std::env;
 
 impl SystemInfo {
@@ -7,7 +7,7 @@ impl SystemInfo {
         let user = env::var("USER").unwrap_or("unknown".to_string());
         let hostname = utils::read::read_file("/etc/hostname").unwrap_or("unknown".to_string());
         let cpu_model = match utils::read::read_file("/proc/cpuinfo"){
-            Some(content) => get_cpu_model(&content),
+            Some(content) => parse_cpu_model(&content),
             None => "unknown".to_string(),
         };
         Self {

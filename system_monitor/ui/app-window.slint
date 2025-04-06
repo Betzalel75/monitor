@@ -1,42 +1,11 @@
-import { Button, VerticalBox, GroupBox, ScrollView } from "std-widgets.slint";
-
-component SystemInfoView {
-    in property <string> os-type;
-    in property <string> user;
-    in property <string> hostname;
-    in property <string> cpu-model;
-    in property <int> total-tasks;
-
-    VerticalBox {
-        GroupBox {
-            title: "System Information";
-            VerticalBox {
-                Text { text: "OS: \{os-type}"; }
-                Text { text: "User: \{user}"; }
-                Text { text: "Hostname: \{hostname}"; }
-                Text { text: "CPU: \{cpu-model}"; }
-                Text { text: "Total Tasks: \{total-tasks}"; }
-            }
-        }
-    }
-}
-
-component MemoryView {
-    in property <string> ram-usage;
-    in property <string> swap-usage;
-
-    GroupBox {
-        title: "Memory Usage";
-        VerticalBox {
-            Text { text: "RAM: \{ram-usage}"; }
-            Text { text: "Swap: \{swap-usage}"; }
-        }
-    }
-}
+import { Button, VerticalBox, GroupBox, ScrollView, GridBox } from "std-widgets.slint";
+import { MemoryView } from "memory_tap.slint";
+import { SystemInfoView } from "system_tab.slint";
+import { NetworkView } from "network_tab.slint";
 
 export component AppWindow inherits Window {
-    width: 800px;
-    height: 600px;
+    min-width: 800px;
+    min-height: 600px;
     title: "System Monitor";
 
     callback refresh();
@@ -49,14 +18,31 @@ export component AppWindow inherits Window {
     in property <int> total-tasks: 0;
     in property <string> ram-usage: "0/0 MB";
     in property <string> swap-usage: "0/0 MB";
+    in property <string> interface-name;
+    in property <string> ipv4;
+    // Received data
+    in property <string> rx-bytes:"0";
+    in property <string> rx-packets:"0";
+    in property <string> rx-errors:"0";
+    in property <string> rx-drops:"0";
+    in property <string> rx-fifo:"0";
+    in property <string> rx-frame:"0";
+    in property <string> rx-compressed:"0";
+    in property <string> rx-multicast:"0";
+    // Transmitted data
+    in property <string> tx-bytes:"0";
+    in property <string> tx-packets:"0";
+    in property <string> tx-errors:"0";
+    in property <string> tx-drops:"0";
+    in property <string> tx-fifo:"0";
+    in property <string> tx-colls:"0";
+    in property <string> tx-compressed:"0";
+    in property <string> tx-carrier:"0";
 
     HorizontalLayout {
-        padding: 10px;
-        spacing: 10px;
 
         VerticalBox {
-            spacing: 10px;
-            
+
             SystemInfoView {
                 os-type: root.os-type;
                 user: root.user;
@@ -72,8 +58,33 @@ export component AppWindow inherits Window {
 
             Button {
                 text: "Refresh";
-                clicked => { root.refresh(); }
+                clicked => {
+                    root.refresh();
+                }
             }
+        
+        NetworkView {
+            interface-name: root.interface-name;
+            ipv4: root.ipv4;
+
+            rx-bytes: root.rx-bytes;
+            rx-packets: root.rx-packets;
+            rx-errors: root.rx-errors;
+            rx-drops: root.rx-drops;
+            rx-fifo: root.rx-fifo;
+            rx-frame: root.rx-frame;
+            rx-compressed: root.rx-compressed;
+            rx-multicast: root.rx-multicast;
+
+            tx-bytes: root.tx-bytes;
+            tx-packets: root.tx-packets;
+            tx-errors: root.tx-errors;
+            tx-drops: root.tx-drops;
+            tx-fifo: root.tx-fifo;
+            tx-colls: root.tx-colls;
+            tx-compressed: root.tx-compressed;
+            tx-carrier: root.tx-carrier;
+        }
         }
     }
 }

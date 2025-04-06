@@ -1,0 +1,19 @@
+import { GroupBox, VerticalBox } from "std-widgets.slint";
+
+export component MemoryView {
+    in property <string> ram-usage;
+    in property <string> swap-usage;
+
+    GroupBox {
+        title: "Memory Usage";
+        VerticalBox {
+            Text {
+                text: "RAM: \{ram-usage}";
+            }
+
+            Text {
+                text: "Swap: \{swap-usage}";
+            }
+        }
+    }
+}

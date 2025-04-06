@@ -7,12 +7,12 @@ use crate::{
 impl MemoryInfo {
     pub fn new() -> Self {
         MemoryInfo {
-            ram_used: 0,
-            ram_total: 0,
-            swap_used: 0,
-            swap_total: 0,
-            disk_used: 0,
-            disk_total: 0,
+            ram_used: 0.0,
+            ram_total: 0.0,
+            swap_used: 0.0,
+            swap_total: 0.0,
+            disk_used: 0.0,
+            disk_total: 0.0,
         }
     }
 

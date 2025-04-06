@@ -1,0 +1,37 @@
+import { GroupBox, VerticalBox } from "std-widgets.slint";
+
+export component SystemInfoView {
+    in property <string> os-type;
+    in property <string> user;
+    in property <string> hostname;
+    in property <string> cpu-model;
+    in property <int> total-tasks;
+
+    VerticalBox {
+        GroupBox {
+        
+            title: "System Information";
+            VerticalBox {
+                Text {
+                    text: "OS: \{os-type}";
+                }
+
+                Text {
+                    text: "User: \{user}";
+                }
+
+                Text {
+                    text: "Hostname: \{hostname}";
+                }
+
+                Text {
+                    text: "CPU: \{cpu-model}";
+                }
+
+                Text {
+                    text: "Total Tasks: \{total-tasks}";
+                }
+            }
+        }
+    }
+}

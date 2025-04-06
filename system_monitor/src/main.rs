@@ -1,7 +1,10 @@
 use slint::{SharedString, Timer};
 use std::time::Duration;
 use std::{cell::RefCell, error::Error, rc::Rc};
+use system_monitor::models::network::InterfaceStats;
 use system_monitor::models::{memory::MemoryInfo, system::SystemInfo};
+use system_monitor::utils::formater::{convert_memory_size, format_memory_size};
+use system_monitor::utils::get_tasks::get_total_tasks;
 
 slint::include_modules!();
 
@@ -9,6 +12,7 @@ slint::include_modules!();
 struct AppState {
     system_info: SystemInfo,
     memory_info: MemoryInfo,
+    network_info: InterfaceStats,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -19,7 +23,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     {
         let mut state = app_state.borrow_mut();
         state.system_info = SystemInfo::new();
+        state.system_info.set_tastks(get_total_tasks());
         state.memory_info = MemoryInfo::new();
+        state.memory_info.update();
+        state.network_info = InterfaceStats::new();
+        state.network_info.update();
     }
 
     // Gestionnaire de rafraîchissement
@@ -30,6 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut state = app_state_refresh.borrow_mut();
         // Mise à jour des données
         state.memory_info.update();
+        state.network_info.update();
 
         // Mise à jour de l'interface
         update_ui(&ui, &state);
@@ -39,7 +48,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ui_handle = ui.as_weak();
     Timer::default().start(
         slint::TimerMode::Repeated,
-        Duration::from_secs(1),
+        Duration::from_secs(3),
         move || {
             if let Some(ui) = ui_handle.upgrade() {
                 ui.invoke_refresh();
@@ -62,18 +71,45 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     ui.set_cpu_model(SharedString::from(state.system_info.cpu_model.clone()));
     ui.set_total_tasks(state.system_info.total_tasks as i32);
 
-    // Formatage de l'utilisation de la mémoire
     let ram_usage = format!(
-        "{:.1}/{:.1} GB",
-        state.memory_info.ram_used as f64 / 1_048_576.0,
-        state.memory_info.ram_total as f64 / 1_048_576.0
+        "{:.2}/{}",
+        convert_memory_size(state.memory_info.ram_used),
+        format_memory_size(state.memory_info.ram_total)
     );
     ui.set_ram_usage(SharedString::from(ram_usage));
 
     let swap_usage = format!(
-        "{:.1}/{:.1} GB",
-        state.memory_info.swap_used as f64 / 1_048_576.0,
-        state.memory_info.swap_total as f64 / 1_048_576.0
+        "{:.2}/{}",
+        convert_memory_size(state.memory_info.swap_used),
+        format_memory_size(state.memory_info.swap_total)
     );
     ui.set_swap_usage(SharedString::from(swap_usage));
+
+    if let Some(interface) = state.network_info.interfaces.first() {
+        if let (Some(rx), Some(tx)) = (&interface.rx_stats, &interface.tx_stats) {
+            // Update interface info
+            ui.set_interface_name(interface.name.clone().into());
+            ui.set_ipv4(interface.ip.to_string().into());
+
+            // Update RX stats
+            ui.set_rx_bytes(rx.bytes.to_string().into());
+            ui.set_rx_packets(rx.packets.to_string().into());
+            ui.set_rx_errors(rx.errs.to_string().into());
+            ui.set_rx_drops(rx.drop.to_string().into());
+            ui.set_rx_fifo(rx.fifo.to_string().into());
+            ui.set_rx_frame(rx.frame.to_string().into());
+            ui.set_rx_compressed(rx.compressed.to_string().into());
+            ui.set_rx_multicast(rx.multicast.to_string().into());
+
+            // Update TX stats
+            ui.set_tx_bytes(tx.bytes.to_string().into());
+            ui.set_tx_packets(tx.packets.to_string().into());
+            ui.set_tx_errors(tx.errs.to_string().into());
+            ui.set_tx_drops(tx.drop.to_string().into());
+            ui.set_tx_fifo(tx.fifo.to_string().into());
+            ui.set_tx_colls(tx.colls.to_string().into());
+            ui.set_tx_carrier(tx.carrier.to_string().into());
+            ui.set_tx_compressed(tx.compressed.to_string().into());
+        }
+    }
 }

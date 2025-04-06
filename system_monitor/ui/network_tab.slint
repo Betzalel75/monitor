@@ -1,0 +1,127 @@
+
+import { VerticalBox, GroupBox, TabWidget, StandardTableView } from "std-widgets.slint";
+
+export component NetworkView {
+    in property <string> interface-name;
+    in property <string> ipv4;
+    // Received data
+    in property <string> rx-bytes;
+    in property <string> rx-packets;
+    in property <string> rx-errors;
+    in property <string> rx-drops;
+    in property <string> rx-fifo;
+    in property <string> rx-frame;
+    in property <string> rx-compressed;
+    in property <string> rx-multicast;
+    // Transmitted data
+    in property <string> tx-bytes;
+    in property <string> tx-packets;
+    in property <string> tx-errors;
+    in property <string> tx-drops;
+    in property <string> tx-fifo;
+    in property <string> tx-colls;
+    in property <string> tx-compressed;
+    in property <string> tx-carrier;
+    width: 100%;
+   
+    VerticalBox {
+        GroupBox {
+        title: "Network";
+        VerticalBox {
+                // Interface Information
+                GroupBox {
+                title: "Interface Information";
+                VerticalBox {
+                    HorizontalLayout {
+                        Text {
+                            text: "Interface:";
+                        }
+
+                        Text {
+                            text: interface-name;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        Text {
+                            text: "IP Address:";
+                        }
+
+                        Text {
+                            text: ipv4;
+                        }
+                    }
+                }
+            }
+
+                // Network Statistics
+                TabWidget {
+
+                Tab {
+
+                    title: "RX";
+                    StandardTableView {
+                        width: 100%;
+                        columns: [
+                            { title: "Interface" },
+                            { title: "Bytes" },
+                            { title: "Packets" },
+                            { title: "Errors" },
+                            { title: "Drops" },
+                            { title: "FIFO" },
+                            { title: "Frame" },
+                            { title: "Compressed" },
+                            { title: "Multicast" },
+                        ];
+                        rows: [
+                            [
+                                { text:  interface-name },
+                                { text: rx-bytes },
+                                { text: rx-packets },
+                                { text: rx-errors },
+                                { text: rx-drops },
+                                { text: rx-fifo },
+                                { text: rx-frame },
+                                { text: rx-compressed },
+                                { text: rx-multicast }
+                            ],
+                        ];
+                    }
+                }
+
+                Tab {
+
+                    title: "TX";
+                    StandardTableView {
+                        width: 100%;
+                        columns: [
+                            { title: "Interface" },
+                            { title: "Bytes" },
+                            { title: "Packets" },
+                            { title: "Errors" },
+                            { title: "Drops" },
+                            { title: "FIFO" },
+                            { title: "Collisions" },
+                            { title: "Compressed" },
+                            { title: "Carrier" },
+                        ];
+                        rows: [
+                            [
+                                { text:  interface-name },
+                                { text:  tx-bytes },
+                                { text: tx-packets },
+                                { text: tx-errors },
+                                { text: tx-drops },
+                                { text:  tx-fifo },
+                                { text: tx-colls },
+                                { text: tx-compressed },
+                                { text:  tx-carrier }
+                            ],
+                        ];
+                    }
+                }
+            }
+        }
+    }
+    }
+}

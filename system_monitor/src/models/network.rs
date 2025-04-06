@@ -1,19 +1,39 @@
+use std::net::Ipv4Addr;
 
-
-pub struct InterfaceStats {
-    pub name: String,
-    pub ipv4: Option<String>,
-    pub rx: NetData,
-    pub tx: NetData,
-}
-
-pub struct NetData {
+#[derive(Debug, Clone, Copy)]
+pub struct RxStats {
     pub bytes: u64,
     pub packets: u64,
     pub errs: u64,
     pub drop: u64,
     pub fifo: u64,
-    pub frame_or_colls: u64, // selon RX ou TX
+    pub frame: u64,
     pub compressed: u64,
-    pub multicast_or_carrier: u64, // selon RX ou TX
+    pub multicast: u64,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TxStats {
+    pub bytes: u64,
+    pub packets: u64,
+    pub errs: u64,
+    pub drop: u64,
+    pub fifo: u64,
+    pub colls: u64,
+    pub carrier: u64,
+    pub compressed: u64,
+}
+
+pub struct Interface {
+    pub name: String,
+    pub ip: Ipv4Addr,
+    pub total_received: u64,
+    pub total_transmitted: u64,
+    pub rx_stats: Option<RxStats>,
+    pub tx_stats: Option<TxStats>,
+}
+
+#[derive(Default)]
+pub struct InterfaceStats{
+    pub interfaces: Vec<Interface>,
 }
