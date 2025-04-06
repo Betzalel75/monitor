@@ -1,0 +1,79 @@
+import { Button, VerticalBox, GroupBox, ScrollView } from "std-widgets.slint";
+
+component SystemInfoView {
+    in property <string> os-type;
+    in property <string> user;
+    in property <string> hostname;
+    in property <string> cpu-model;
+    in property <int> total-tasks;
+
+    VerticalBox {
+        GroupBox {
+            title: "System Information";
+            VerticalBox {
+                Text { text: "OS: \{os-type}"; }
+                Text { text: "User: \{user}"; }
+                Text { text: "Hostname: \{hostname}"; }
+                Text { text: "CPU: \{cpu-model}"; }
+                Text { text: "Total Tasks: \{total-tasks}"; }
+            }
+        }
+    }
+}
+
+component MemoryView {
+    in property <string> ram-usage;
+    in property <string> swap-usage;
+
+    GroupBox {
+        title: "Memory Usage";
+        VerticalBox {
+            Text { text: "RAM: \{ram-usage}"; }
+            Text { text: "Swap: \{swap-usage}"; }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    width: 800px;
+    height: 600px;
+    title: "System Monitor";
+
+    callback refresh();
+
+    // Properties for system info
+    in property <string> os-type: "Unknown";
+    in property <string> user: "Unknown";
+    in property <string> hostname: "Unknown";
+    in property <string> cpu-model: "Unknown";
+    in property <int> total-tasks: 0;
+    in property <string> ram-usage: "0/0 MB";
+    in property <string> swap-usage: "0/0 MB";
+
+    HorizontalLayout {
+        padding: 10px;
+        spacing: 10px;
+
+        VerticalBox {
+            spacing: 10px;
+            
+            SystemInfoView {
+                os-type: root.os-type;
+                user: root.user;
+                hostname: root.hostname;
+                cpu-model: root.cpu-model;
+                total-tasks: root.total-tasks;
+            }
+
+            MemoryView {
+                ram-usage: root.ram-usage;
+                swap-usage: root.swap-usage;
+            }
+
+            Button {
+                text: "Refresh";
+                clicked => { root.refresh(); }
+            }
+        }
+    }
+}
