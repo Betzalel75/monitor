@@ -18,6 +18,9 @@ struct AppState {
 fn main() -> Result<(), Box<dyn Error>> {
     let app_state = Rc::new(RefCell::new(AppState::default()));
     let ui = AppWindow::new()?;
+    env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .init();
 
     // Initialisation
     {
@@ -27,7 +30,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         state.memory_info = MemoryInfo::new();
         state.memory_info.update();
         state.network_info = InterfaceStats::new();
-        state.network_info.update();
+        state.network_info.initialize();
+        // info!("{:?}", state.network_info);
     }
 
     // Gestionnaire de rafraîchissement
@@ -85,31 +89,51 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     );
     ui.set_swap_usage(SharedString::from(swap_usage));
 
-    if let Some(interface) = state.network_info.interfaces.first() {
+    use slint::ModelRc;
+    use slint::VecModel;
+
+    let mut rx_rows = Vec::new();
+    let mut tx_rows = Vec::new();
+    let mut interface_list = Vec::new();
+
+    for interface in &state.network_info.interfaces {
+        // Ajouter l'interface à la liste
+        interface_list.push(InterfaceInfo {
+            name: interface.name.clone().into(),
+            ip: interface.ip.to_string().into(),
+        });
+
         if let (Some(rx), Some(tx)) = (&interface.rx_stats, &interface.tx_stats) {
-            // Update interface info
-            ui.set_interface_name(interface.name.clone().into());
-            ui.set_ipv4(interface.ip.to_string().into());
+            let name: SharedString = interface.name.clone().into();
 
-            // Update RX stats
-            ui.set_rx_bytes(rx.bytes.to_string().into());
-            ui.set_rx_packets(rx.packets.to_string().into());
-            ui.set_rx_errors(rx.errs.to_string().into());
-            ui.set_rx_drops(rx.drop.to_string().into());
-            ui.set_rx_fifo(rx.fifo.to_string().into());
-            ui.set_rx_frame(rx.frame.to_string().into());
-            ui.set_rx_compressed(rx.compressed.to_string().into());
-            ui.set_rx_multicast(rx.multicast.to_string().into());
+            rx_rows.push(RxInfo {
+                name: name.clone(),
+                rx_bytes: rx.bytes.to_string().into(),
+                rx_packets: rx.packets.to_string().into(),
+                rx_errors: rx.errs.to_string().into(),
+                rx_drops: rx.drop.to_string().into(),
+                rx_fifo: rx.fifo.to_string().into(),
+                rx_frame: rx.frame.to_string().into(),
+                rx_compressed: rx.compressed.to_string().into(),
+                rx_multicast: rx.multicast.to_string().into(),
+            });
 
-            // Update TX stats
-            ui.set_tx_bytes(tx.bytes.to_string().into());
-            ui.set_tx_packets(tx.packets.to_string().into());
-            ui.set_tx_errors(tx.errs.to_string().into());
-            ui.set_tx_drops(tx.drop.to_string().into());
-            ui.set_tx_fifo(tx.fifo.to_string().into());
-            ui.set_tx_colls(tx.colls.to_string().into());
-            ui.set_tx_carrier(tx.carrier.to_string().into());
-            ui.set_tx_compressed(tx.compressed.to_string().into());
+            tx_rows.push(TxInfo {
+                name,
+                tx_bytes: tx.bytes.to_string().into(),
+                tx_packets: tx.packets.to_string().into(),
+                tx_errors: tx.errs.to_string().into(),
+                tx_drops: tx.drop.to_string().into(),
+                tx_fifo: tx.fifo.to_string().into(),
+                tx_colls: tx.colls.to_string().into(),
+                tx_compressed: tx.compressed.to_string().into(),
+                tx_carrier: tx.carrier.to_string().into(),
+            });
         }
     }
+
+    // Mettre à jour l'interface avec les modèles
+    ui.set_rx_table(ModelRc::new(VecModel::from(rx_rows)));
+    ui.set_tx_table(ModelRc::new(VecModel::from(tx_rows)));
+    ui.set_interface_list(ModelRc::new(VecModel::from(interface_list)));
 }

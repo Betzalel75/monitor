@@ -1,127 +1,253 @@
 
-import { VerticalBox, GroupBox, TabWidget, StandardTableView } from "std-widgets.slint";
+import { VerticalBox, GroupBox, TabWidget, StandardTableView, ScrollView } from "std-widgets.slint";
+
+export struct InterfaceInfo {
+    name: string,
+    ip: string,
+}
+
+export struct RxInfo {
+    name: string,
+    rx_bytes: string,
+    rx_packets: string,
+    rx_errors: string,
+    rx_drops: string,
+    rx_fifo: string,
+    rx_frame: string,
+    rx_compressed: string,
+    rx_multicast: string,
+}
+
+export struct TxInfo {
+    name: string,
+    tx_bytes: string,
+    tx_packets: string,
+    tx_errors: string,
+    tx_drops: string,
+    tx_fifo: string,
+    tx_colls: string,
+    tx_compressed: string,
+    tx_carrier: string,
+}
 
 export component NetworkView {
-    in property <string> interface-name;
-    in property <string> ipv4;
-    // Received data
-    in property <string> rx-bytes;
-    in property <string> rx-packets;
-    in property <string> rx-errors;
-    in property <string> rx-drops;
-    in property <string> rx-fifo;
-    in property <string> rx-frame;
-    in property <string> rx-compressed;
-    in property <string> rx-multicast;
-    // Transmitted data
-    in property <string> tx-bytes;
-    in property <string> tx-packets;
-    in property <string> tx-errors;
-    in property <string> tx-drops;
-    in property <string> tx-fifo;
-    in property <string> tx-colls;
-    in property <string> tx-compressed;
-    in property <string> tx-carrier;
+    in property <[InterfaceInfo]> interface-list;
+    in property <[RxInfo]> rx_list;
+    in property <[TxInfo]> tx_list;
+    // Définir les titres des colonnes
+        property <[string]> headers: [
+        "Interface",
+        "Bytes",
+        "Packets",
+        "Errors",
+        "Drops",
+        "FIFO",
+        "Collisions",
+        "Compressed",
+        "Carrier"
+    ];
+
     width: 100%;
-   
+
     VerticalBox {
         GroupBox {
-        title: "Network";
-        VerticalBox {
+            title: "Network";
+            VerticalBox {
                 // Interface Information
                 GroupBox {
-                title: "Interface Information";
-                VerticalBox {
-                    HorizontalLayout {
-                        Text {
-                            text: "Interface:";
-                        }
+                    title: "Interface Information";
 
-                        Text {
-                            text: interface-name;
-                        }
-                    }
+                    ScrollView {
+                        VerticalBox {
+                            for interface in interface-list: HorizontalLayout {
+                                Text {
+                                    text: "Interface: ";
+                                    width: 150px;
+                                }
 
-                    HorizontalLayout {
-                        Text {
-                            text: "IP Address:";
-                        }
+                                Text {
+                                    text: interface.name;
+                                    width: 150px;
+                                }
 
-                        Text {
-                            text: ipv4;
+                                Text {
+                                    text: "IP Address: ";
+                                    width: 150px;
+                                }
+
+                                Text {
+                                    text: interface.ip;
+                                    width: 150px;
+                                }
+                            }
                         }
                     }
                 }
-            }
 
                 // Network Statistics
                 TabWidget {
+                    Tab {
+                        title: "RX";
+                        ScrollView { // Pour pouvoir faire défiler si la liste est longue
+                                        HorizontalLayout {
+                                padding: 10px;
+                                padding-left: 0px;
+                                spacing: 0px;
+                                for header_text in headers: Text {
+                                    text: header-text;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                            }
 
-                Tab {
+                            VerticalLayout { // Organise les éléments verticalement
+                                padding-top: 75px;
+                                spacing: -10px;  // Espace entre les lignes de texte
+                                            for interface_data in root.rx_list: Text {
+                                    GridLayout {
+                                        Row {
+                                            Text {
+                                                text: interface_data.name;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
 
-                    title: "RX";
-                    StandardTableView {
-                        width: 100%;
-                        columns: [
-                            { title: "Interface" },
-                            { title: "Bytes" },
-                            { title: "Packets" },
-                            { title: "Errors" },
-                            { title: "Drops" },
-                            { title: "FIFO" },
-                            { title: "Frame" },
-                            { title: "Compressed" },
-                            { title: "Multicast" },
-                        ];
-                        rows: [
-                            [
-                                { text:  interface-name },
-                                { text: rx-bytes },
-                                { text: rx-packets },
-                                { text: rx-errors },
-                                { text: rx-drops },
-                                { text: rx-fifo },
-                                { text: rx-frame },
-                                { text: rx-compressed },
-                                { text: rx-multicast }
-                            ],
-                        ];
+                                            Text {
+                                                text: interface_data.rx_bytes;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_packets;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_errors;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_drops;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_fifo;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_frame;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_compressed;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.rx_multicast;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
 
-                Tab {
+                    Tab {
+                        title: "TX";
 
-                    title: "TX";
-                    StandardTableView {
-                        width: 100%;
-                        columns: [
-                            { title: "Interface" },
-                            { title: "Bytes" },
-                            { title: "Packets" },
-                            { title: "Errors" },
-                            { title: "Drops" },
-                            { title: "FIFO" },
-                            { title: "Collisions" },
-                            { title: "Compressed" },
-                            { title: "Carrier" },
-                        ];
-                        rows: [
-                            [
-                                { text:  interface-name },
-                                { text:  tx-bytes },
-                                { text: tx-packets },
-                                { text: tx-errors },
-                                { text: tx-drops },
-                                { text:  tx-fifo },
-                                { text: tx-colls },
-                                { text: tx-compressed },
-                                { text:  tx-carrier }
-                            ],
-                        ];
+                        ScrollView { // Pour pouvoir faire défiler si la liste est longue
+                                        HorizontalLayout {
+                                padding: 10px; // Un peu d'espace autour
+                                padding-left: 0px;
+                                spacing: 0px;
+                                for header_text in headers: Text {
+                                    text: header-text;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                            }
+
+                            VerticalLayout { // Organise les éléments verticalement
+                                padding-top: 75px;
+                                spacing: -10px;  // Espace entre les lignes de texte
+                                            for interface_data in root.tx_list: Text {
+                                    GridLayout {
+                                        Row {
+                                            Text {
+                                                text: interface_data.name;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_bytes;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_packets;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_errors;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_drops;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_fifo;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_colls;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_compressed;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+
+                                            Text {
+                                                text: interface_data.tx_carrier;
+                                                horizontal-alignment: center;
+                                                width: 150px;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-    }
     }
 }

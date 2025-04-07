@@ -24,6 +24,7 @@ pub struct TxStats {
     pub compressed: u64,
 }
 
+#[derive(Debug)]
 pub struct Interface {
     pub name: String,
     pub ip: Ipv4Addr,
@@ -33,7 +34,7 @@ pub struct Interface {
     pub tx_stats: Option<TxStats>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct InterfaceStats{
     pub interfaces: Vec<Interface>,
 }
