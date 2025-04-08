@@ -1,9 +1,11 @@
 use std::{fs, path::Path};
 
-pub fn get_total_tasks() -> u32 {
+use crate::models::process::ProcessInfo;
+
+pub fn get_tasks() -> Vec<ProcessInfo> {
     // Pour obtenir la liste de tous les processus :
     let proc_dir = Path::new("/proc");
-    let mut tasks = 0;
+    let mut tasks = Vec::new();
 
     if let Ok(entries) = fs::read_dir(proc_dir) {
         for entry in entries {
@@ -13,9 +15,11 @@ pub fn get_total_tasks() -> u32 {
             };
             let path = entry.path();
             if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                if let Ok(_) = name.parse::<u32>() {
+                if let Ok(pid) = name.parse::<u32>() {
                     // Le nom est un PID valide
-                    tasks +=1;
+                    let mut process = ProcessInfo::new(pid);
+                    process.update();
+                    tasks.push(process);
                 }
             }
         }

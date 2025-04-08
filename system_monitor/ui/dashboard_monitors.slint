@@ -1,0 +1,575 @@
+import { DashboardBox } from "dashboard_box.slint";
+import { ProcessData, InterfaceInfo, RxInfo, TxInfo } from "data_types.slint";
+import { VerticalBox, GroupBox, TabWidget, StandardTableView, ScrollView } from "std-widgets.slint";
+import {DashboardSkin} from "dashboard_theme.slint";
+
+// Status Card Component
+component StatusCard inherits Rectangle {
+    in property <string> title;
+    in property <string> value;
+    in property <brush> indicator-color: DashboardSkin.palette.highlight;
+
+    height: 80px;
+    background: DashboardSkin.palette.box;
+    border-radius: 8px;
+    drop-shadow-offset-x: 2px;
+    drop-shadow-offset-y: 2px;
+    drop-shadow-blur: 6px;
+    drop-shadow-color: DashboardSkin.palette.shadow;
+
+    Rectangle {
+        width: 4px;
+        height: 60%;
+        background: root.indicator-color;
+        border-radius: 2px;
+        x: 0px;
+        y: parent.height / 2 - self.height / 2;
+    }
+
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 4px;
+        alignment: center;
+
+        Text {
+            text: root.title;
+            font-size: DashboardSkin.SmallFont;
+            color: DashboardSkin.palette.text;
+        }
+
+        Text {
+            text: root.value;
+            font-size: DashboardSkin.LargeFont;
+            font-weight: 700;
+            color: DashboardSkin.palette.highlight;
+        }
+    }
+}
+
+// System Info Component
+export component SystemInfoMonitor inherits DashboardBox {
+    in property <string> os-type;
+    in property <string> user;
+    in property <string> hostname;
+    in property <string> cpu-model;
+    in property <int> total-tasks;
+
+    title: "System Information";
+    height: 350px;
+
+    GridLayout {
+        spacing: 12px;
+        Row {
+            StatusCard {
+                title: "OS Type";
+                value: os-type;
+                indicator-color: #FF5C00;
+            }
+
+            StatusCard {
+                title: "User";
+                value: user;
+                indicator-color: #6776FF;
+            }
+        }
+
+        Row {
+            StatusCard {
+                title: "Hostname";
+                value: hostname;
+                indicator-color: #00C853;
+            }
+
+            StatusCard {
+                title: "CPU";
+                value: cpu-model;
+                indicator-color: #FF3D00;
+            }
+        }
+
+        Row {
+            StatusCard {
+                title: "Total Tasks";
+                value: total-tasks;
+                indicator-color: #FFAB00;
+                colspan: 2;
+            }
+        }
+    }
+}
+
+// Memory Usage Component
+export component MemoryMonitor inherits DashboardBox {
+    in property <string> ram-usage;
+    in property <string> swap-usage;
+
+    title: "Memory Usage";
+    height: 350px;
+
+    VerticalLayout {
+        spacing: 20px;
+
+        // RAM Usage
+        VerticalLayout {
+            spacing: 8px;
+
+            Text {
+                text: "RAM";
+                font-size: DashboardSkin.MediumFont;
+                font-weight: 600;
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+
+                Rectangle {
+                    width: 45px;
+                    height: 45px;
+
+                    Image {
+                        source: @image-url("images/ram.svg");
+                        width: parent.width;
+                        height: parent.height;
+                        colorize: DashboardSkin.palette.highlight;
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+
+                    Text {
+                        text: ram-usage;
+                        font-size: DashboardSkin.LargeFont;
+                        font-weight: 700;
+                        color: DashboardSkin.palette.highlight;
+                    }
+
+                    Rectangle {
+                        height: 8px;
+                        background: #E0E0E0;
+                        border-radius: 4px;
+
+                        Rectangle {
+                            height: parent.height;
+                            width: 80%; // TODO: Calculate from ram-usage
+                            background: @linear-gradient(90deg, #6776FF, #6100FF);
+                            border-radius: 4px;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Swap Usage
+        VerticalLayout {
+            spacing: 8px;
+
+            Text {
+                text: "Swap";
+                font-size: DashboardSkin.MediumFont;
+                font-weight: 600;
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+
+                Rectangle {
+                    width: 45px;
+                    height: 45px;
+
+                    Image {
+                        source: @image-url("images/swap.svg");
+                        width: parent.width;
+                        height: parent.height;
+                        colorize: #FF5C00;
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+
+                    Text {
+                        text: swap-usage;
+                        font-size: DashboardSkin.LargeFont;
+                        font-weight: 700;
+                        color: #FF5C00;
+                    }
+
+                    Rectangle {
+                        height: 8px;
+                        background: #E0E0E0;
+                        border-radius: 4px;
+
+                        Rectangle {
+                            height: parent.height;
+                            width: 40%; // TODO: Calculate from swap-usage
+                            background: @linear-gradient(90deg, #FF5C00, #FF3122);
+                            border-radius: 4px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Tasks Monitor Component
+export component TasksMonitor inherits DashboardBox {
+    in property <[ProcessData]> processes;
+    title: "Processes";
+    // height: 70%;
+    VerticalLayout {
+        spacing: 10px;
+        height: 100%;
+
+        // Header
+        Rectangle {
+            background: DashboardSkin.palette.tableHeader;
+            border-radius: 4px;
+
+            HorizontalLayout {
+                padding: 10px;
+                padding-left: 16px;
+
+                for header in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
+                    text: header;
+                    horizontal-alignment: left;
+                    font-size: DashboardSkin.SmallFont;
+                    font-weight: 700;
+                    width: header == "Name" ? 250px : 100px;
+                }
+            }
+        }
+
+        // Process List
+        ScrollView {
+            VerticalLayout {
+                spacing: 2px;
+                for process in processes: Rectangle {
+                    height: 32px;
+                    border-radius: 4px;
+                    background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(5%) : transparent;
+
+                    ta := TouchArea { }
+
+                    HorizontalLayout {
+                        padding: 8px;
+                        padding-left: 16px;
+
+                        Text {
+                            text: process.pid;
+                            horizontal-alignment: left;
+                            width: 100px;
+                            font-size: DashboardSkin.SmallFont;
+                        }
+
+                        Text {
+                            text: process.name;
+                            horizontal-alignment: left;
+                            width: 250px;
+                            font-size: DashboardSkin.SmallFont;
+                        }
+
+                        Text {
+                            text: process.state;
+                            horizontal-alignment: left;
+                            width: 100px;
+                            font-size: DashboardSkin.SmallFont;
+                        }
+
+                        Text {
+                            text: process.cpu;
+                            horizontal-alignment: left;
+                            width: 100px;
+                            font-size: DashboardSkin.SmallFont;
+                        }
+
+                        Text {
+                            text: process.memory;
+                            horizontal-alignment: left;
+                            width: 100px;
+                            font-size: DashboardSkin.SmallFont;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Network Monitor Component
+export component NetworkMonitor inherits DashboardBox {
+    in property <[InterfaceInfo]> interface-list;
+    in property <[RxInfo]> rx-info;
+    in property <[TxInfo]> tx-info;
+
+    title: "Network";
+    ScrollView {
+        height: 90%;
+        TabWidget {
+            Tab {
+                title: "Interfaces";
+                ScrollView {
+                    Rectangle {
+                        VerticalLayout {
+                            spacing: 12px;
+
+                            for interface in interface-list: Rectangle {
+                                height: 64px;
+                                background: DashboardSkin.palette.tableHeader;
+                                border-radius: 6px;
+
+                                VerticalLayout {
+                                    padding: 10px;
+                                    spacing: 4px;
+
+                                    Text {
+                                        text: interface.name;
+                                        font-size: DashboardSkin.MediumFont;
+                                        font-weight: 600;
+                                    }
+
+                                    Text {
+                                        text: "IP: " + interface.ip;
+                                        font-size: DashboardSkin.SmallFont;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Tab {
+                title: "Network Statistics";
+
+                TabWidget {
+                    Tab {
+                        title: "RX";
+
+                        ScrollView {
+                            VerticalLayout {
+                                spacing: 12px;
+
+                            // Header
+                            Rectangle {
+                                    height: 36px;
+                                    background: DashboardSkin.palette.tableHeader;
+                                    border-radius: 4px;
+
+                                    HorizontalLayout {
+                                        padding: 10px;
+
+                                        for header in [
+                                            "Interface",
+                                            "Bytes",
+                                            "Packets",
+                                            "Errors",
+                                            "Drops",
+                                            "FIFO",
+                                            "Frame",
+                                            "Compressed",
+                                            "Multicast"
+                                        ]: Text {
+                                            text: header;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            font-weight: 700;
+                                            width: 120px;
+                                        }
+                                    }
+                                }
+
+                            // RX Data
+                            for data in rx-info: Rectangle {
+                                    height: 36px;
+
+                                    HorizontalLayout {
+                                        padding: 10px;
+
+                                        Text {
+                                            text: data.name;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-bytes;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-packets;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-errors;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-drops;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-fifo;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-frame;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-compressed;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.rx-multicast;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Tab {
+                        title: "TX";
+
+                        ScrollView {
+                            VerticalLayout {
+                                spacing: 12px;
+
+                            // Header
+                            Rectangle {
+                                    height: 36px;
+                                    background: DashboardSkin.palette.tableHeader;
+                                    border-radius: 4px;
+
+                                    HorizontalLayout {
+                                        padding: 10px;
+
+                                        for header in [
+                                            "Interface",
+                                            "Bytes",
+                                            "Packets",
+                                            "Errors",
+                                            "Drops",
+                                            "FIFO",
+                                            "Colls",
+                                            "Carrier",
+                                            "Compressed"
+                                        ]: Text {
+                                            text: header;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            font-weight: 700;
+                                            width: 120px;
+                                        }
+                                    }
+                                }
+
+                            // TX Data
+                            for data in tx-info: Rectangle {
+                                    height: 36px;
+
+                                    HorizontalLayout {
+                                        padding: 10px;
+
+                                        Text {
+                                            text: data.name;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-bytes;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-packets;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-errors;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-drops;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-fifo;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-colls;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-carrier;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+
+                                        Text {
+                                            text: data.tx-compressed;
+                                            horizontal-alignment: center;
+                                            font-size: DashboardSkin.SmallFont;
+                                            width: 120px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

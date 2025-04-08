@@ -1,0 +1,28 @@
+import { DashboardSkin } from "dashboard_theme.slint";
+
+export component DashboardBox inherits Rectangle {
+    in property <string> title;
+    
+    background: DashboardSkin.palette.box;
+    drop-shadow-offset-x: 4px;
+    drop-shadow-offset-y: 4px;
+    drop-shadow-blur: 8px;
+    drop-shadow-color: DashboardSkin.palette.shadow;
+    border-radius: 8px;
+    clip: true;
+    
+    VerticalLayout {
+        padding: 15px;
+        spacing: 12px;
+        alignment: start;
+
+        if (root.title != "") : Text {
+            text: root.title;
+            font-size: DashboardSkin.TitleFont;
+            font-weight: 700;
+            color: DashboardSkin.palette.text;
+        }
+        
+        @children
+    }
+}

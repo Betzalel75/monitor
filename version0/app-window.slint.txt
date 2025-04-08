@@ -1,0 +1,67 @@
+import { Button, VerticalBox, GroupBox, ScrollView, GridBox } from "std-widgets.slint";
+import { MemoryView } from "memory_tap.slint";
+import { SystemInfoView } from "system_tab.slint";
+import { NetworkView, InterfaceInfo,RxInfo,TxInfo } from "network_tab.slint";
+import { TasksView, ProcessData } from "tasks_tab.slint";
+
+export component AppWindow inherits Window {
+    min-width: 800px;
+    min-height: 600px;
+    title: "System Monitor";
+
+    callback refresh();
+
+    // Properties for system info
+    in property <string> os-type: "Unknown";
+    in property <string> user: "Unknown";
+    in property <string> hostname: "Unknown";
+    in property <string> cpu-model: "Unknown";
+    in property <int> total-tasks: 0;
+    in property <string> ram-usage: "0/0 MB";
+    in property <string> swap-usage: "0/0 MB";
+    in property <[InterfaceInfo]> interface-list;
+
+    in property <[ RxInfo]> rx-table;
+    in property <[ TxInfo]> tx-table;
+
+    // Processus
+    in property <[ProcessData]> process-list;
+
+    HorizontalLayout {
+
+        VerticalBox {
+            GridLayout {
+                Rectangle {
+                    SystemInfoView {
+                        os-type: root.os-type;
+                        user: root.user;
+                        hostname: root.hostname;
+                        cpu-model: root.cpu-model;
+                        total-tasks: root.total-tasks;
+                    }
+
+                    col: 0;
+                }
+
+                Rectangle {
+                    MemoryView {
+                        ram-usage: root.ram-usage;
+                        swap-usage: root.swap-usage;
+                    }
+
+                    col: 1;
+                }
+            }
+
+            TasksView {
+                processes: root.process-list;
+            }
+
+            NetworkView {
+                interface-list: root.interface-list; // ← liaison
+                rx_list: root.rx-table;
+                tx_list: root.tx-table;
+            }
+        }
+    }
+}

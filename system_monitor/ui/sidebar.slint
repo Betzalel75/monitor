@@ -1,0 +1,104 @@
+import { DashboardSkin } from "dashboard_theme.slint";
+
+component MenuItem inherits Rectangle {
+    in property <string> text;
+    in-out property <bool> active;
+    in property <image> icon;
+    callback clicked();
+
+    height: 40px;
+    background: root.active ? rgba(100%, 100%, 100%, 14%) : ta.has-hover ? rgba(100%, 100%, 100%, 9%) : transparent;
+    border-radius: 4px;
+
+    ta := TouchArea {
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    HorizontalLayout {
+        padding: 10px;
+        spacing: 12px;
+        alignment: start;
+
+        Image {
+            source: icon;
+            width: 16px;
+            height: 16px;
+        }
+
+        Text {
+            text: root.text;
+            color: white;
+            font-size: DashboardSkin.SmallFont;
+            vertical-alignment: center;
+        }
+    }
+}
+
+export component Sidebar inherits Rectangle {
+    in-out property <int> active-index: 0;
+    callback menu-item-clicked(int);
+
+    background: DashboardSkin.palette.menuBar;
+    width: 220px;
+
+    VerticalLayout {
+        padding: 20px;
+        spacing: 30px;
+
+        // Header/Logo
+        VerticalLayout {
+            alignment: center;
+            spacing: 8px;
+
+            Image {
+                source: @image-url("images/system-monitor.svg");
+                width: 60px;
+                height: 60px;
+            }
+
+            Text {
+                text: "System Monitor";
+                color: white;
+                font-size: DashboardSkin.MediumFont;
+                font-weight: 700;
+                horizontal-alignment: center;
+            }
+        }
+
+        // Menu Items
+        VerticalLayout {
+            spacing: 4px;
+
+            for entry[idx] in [
+                { name: "Dashboard", icon: @image-url("images/dashboard.svg") },
+                { name: "System Info", icon: @image-url("images/cpu.svg") },
+                { name: "Memory", icon: @image-url("images/ram.svg") },
+                { name: "Processes", icon: @image-url("images/tasks.svg") },
+                { name: "Network", icon: @image-url("images/network.svg") },
+                { name: "Settings", icon: @image-url("images/settings.svg") },
+            ]: MenuItem {
+                text: entry.name;
+                icon: entry.icon;
+                active: root.active-index == idx;
+                clicked => {
+                    root.active-index = idx;
+                    root.menu-item-clicked(idx);
+                }
+            }
+        }
+
+        // Footer/Version
+        Rectangle {
+            height: 0;
+        }
+
+        Text {
+            text: "v1.0.0";
+            color: white.with-alpha(0.5);
+            font-size: DashboardSkin.TinyFont;
+            horizontal-alignment: center;
+        }
+    }
+}

@@ -31,3 +31,9 @@ impl Default for TaskStats {
         TaskStats::Stopped
     }
 }
+
+#[derive(Default)]
+pub struct ProcessList{
+    pub tasks: Vec<ProcessInfo>,
+    pub total_tasks: u32
+}

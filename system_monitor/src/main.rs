@@ -1,10 +1,10 @@
 use slint::{SharedString, Timer};
+use system_monitor::models::process::ProcessList;
 use std::time::Duration;
 use std::{cell::RefCell, error::Error, rc::Rc};
 use system_monitor::models::network::InterfaceStats;
 use system_monitor::models::{memory::MemoryInfo, system::SystemInfo};
 use system_monitor::utils::formater::{convert_memory_size, format_memory_size};
-use system_monitor::utils::get_tasks::get_total_tasks;
 
 slint::include_modules!();
 
@@ -13,6 +13,7 @@ struct AppState {
     system_info: SystemInfo,
     memory_info: MemoryInfo,
     network_info: InterfaceStats,
+    processes: ProcessList,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -26,7 +27,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     {
         let mut state = app_state.borrow_mut();
         state.system_info = SystemInfo::new();
-        state.system_info.set_tastks(get_total_tasks());
+        state.processes = ProcessList::new();
+        let total_tasks = state.processes.total_tasks;
+        state.system_info.set_tastks(total_tasks);
         state.memory_info = MemoryInfo::new();
         state.memory_info.update();
         state.network_info = InterfaceStats::new();
@@ -136,4 +139,17 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     ui.set_rx_table(ModelRc::new(VecModel::from(rx_rows)));
     ui.set_tx_table(ModelRc::new(VecModel::from(tx_rows)));
     ui.set_interface_list(ModelRc::new(VecModel::from(interface_list)));
+    let process_rows: Vec<ProcessData> = state
+            .processes.tasks
+            .iter()
+            .map(|process| ProcessData {
+                pid: process.pid.to_string().into(),
+                name: process.name.clone().into(),
+                state: process.state.to_string().into(),
+                cpu: format!("{:.1}%", process.cpu_usage * 100.0).into(),
+                memory: format!("{:.1}%", process.mem_usage * 100.0).into(),
+            })
+            .collect();
+    
+        ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
 }

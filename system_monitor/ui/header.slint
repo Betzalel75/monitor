@@ -1,0 +1,77 @@
+import { DashboardSkin } from "dashboard_theme.slint";
+
+
+export component Header inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle;
+    callback refresh();
+
+    height: 80px;
+    background: DashboardSkin.palette.box;
+    border-radius: 8px;
+    drop-shadow-offset-x: 4px;
+    drop-shadow-offset-y: 4px;
+    drop-shadow-blur: 8px;
+    drop-shadow-color: DashboardSkin.palette.shadow;
+    
+    HorizontalLayout {
+        padding: 20px;
+        
+        // Title
+        VerticalLayout {
+            alignment: center;
+            spacing: 4px;
+            
+            Text {
+                text: root.title;
+                color: DashboardSkin.palette.text;
+                font-size: DashboardSkin.LargeFont;
+                font-weight: 700;
+            }
+            
+            Text {
+                text: root.subtitle;
+                color: DashboardSkin.palette.text.with-alpha(0.6);
+                font-size: DashboardSkin.SmallFont;
+            }
+        }
+        
+        // Spacer
+        Rectangle {}
+        
+        // Refresh Button
+        Rectangle {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background: DashboardSkin.palette.tableHeader;
+            
+            property <bool> is-pressed: ta.pressed;
+            
+            states [
+                pressed when is-pressed: {
+                    background: DashboardSkin.palette.tableHeader.darker(10%);
+                    // scale: 0.95;
+                }
+            ]
+            
+            animate background { duration: 100ms; easing: ease-in-out; }
+            // animate scale { duration: 100ms; easing: ease-in-out; }
+            
+            Image {
+                source: @image-url("images/refresh.svg");
+                width: 18px;
+                height: 18px;
+                colorize: DashboardSkin.palette.text;
+                x: (parent.width - self.width) / 2;
+                y: (parent.height - self.height) / 2;
+            }
+            
+            ta := TouchArea {
+                clicked => {
+                    root.refresh();
+                }
+            }
+        }
+    }
+}

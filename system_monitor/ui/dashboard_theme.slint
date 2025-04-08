@@ -1,0 +1,46 @@
+import { Palette } from "std-widgets.slint";
+
+struct DashboardPalette {
+    menuBar: brush,
+    mainContent: brush,
+    box: brush,
+    chartElement: brush,
+    roundButton: brush,
+    tableHeader: brush,
+    text: brush,
+    highlight: brush,
+    shadow: brush,
+}
+
+export global DashboardSkin {
+    in property <bool> dark: Palette.color-scheme == ColorScheme.dark;
+    out property <DashboardPalette> palette: root.dark ? {
+        menuBar: #2937A7,
+        mainContent: #101318,
+        box: #1A1F26,
+        chartElement: #1A1F26,
+        roundButton: #242832,
+        tableHeader: #242832,
+        text: #FFFFFF,
+        highlight: #6776FF,
+        shadow: #0008,
+    } : {
+        menuBar: #6D7BFB,
+        mainContent: #F5F7FA,
+        box: #FFFFFF,
+        chartElement: #FFFFFF,
+        roundButton: #F7F7F7,
+        tableHeader: #F4F4F4,
+        text: #222222,
+        highlight: #6776FF,
+        shadow: #0002,
+    };
+
+    out property <length> TinyFont: 9px;
+    out property <length> SmallFont: 10px;
+    out property <length> DefaultFont: 12px;
+    out property <length> MediumFont: 14px;
+    out property <length> LargeFont: 18px;
+    out property <length> HugeFont: 24px;
+    out property <length> TitleFont: 12px;
+}

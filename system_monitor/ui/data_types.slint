@@ -1,0 +1,36 @@
+export struct ProcessData {
+    pid: string,
+    name: string,
+    state: string,
+    cpu: string,
+    memory: string,
+}
+
+export struct InterfaceInfo {
+    name: string,
+    ip: string,
+}
+
+export struct RxInfo {
+    name: string,
+    rx-bytes: string,
+    rx-packets: string,
+    rx-errors: string,
+    rx-drops: string,
+    rx-fifo: string,
+    rx-frame: string,
+    rx-compressed: string,
+    rx-multicast: string,
+}
+
+export struct TxInfo {
+    name: string,
+    tx_bytes: string,
+    tx_packets: string,
+    tx_errors: string,
+    tx_drops: string,
+    tx_fifo: string,
+    tx_colls: string,
+    tx_compressed: string,
+    tx_carrier: string,
+}

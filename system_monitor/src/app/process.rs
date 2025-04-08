@@ -1,7 +1,7 @@
 
 use std::str::FromStr;
 
-use crate::{models::process::{ProcessInfo, TaskStats}, utils::read::read_file};
+use crate::{models::process::{ProcessInfo, ProcessList, TaskStats}, utils::{get_tasks::get_tasks, read::read_file}};
 
 impl ProcessInfo {
     pub fn new(pid: u32) -> Self {
@@ -57,6 +57,15 @@ impl ProcessInfo {
                 self.mem_usage = (resident * 4096) as f32 / (size * 4096) as f32;
             }
         }
+    }
+}
+
+
+impl ProcessList {
+    pub fn new()->Self{
+        let tasks = get_tasks();
+        let total_tasks = tasks.len() as u32;
+        Self { tasks , total_tasks }
     }
 }
 

@@ -1,12 +1,152 @@
-import { Button, VerticalBox, GroupBox, ScrollView, GridBox } from "std-widgets.slint";
-import { MemoryView } from "memory_tap.slint";
-import { SystemInfoView } from "system_tab.slint";
-import { NetworkView, InterfaceInfo,RxInfo,TxInfo } from "network_tab.slint";
+import { SystemInfoMonitor, MemoryMonitor, TasksMonitor, NetworkMonitor } from "dashboard_monitors.slint";
+import { Sidebar } from "sidebar.slint";
+import { Header } from "header.slint";
+import { ProcessData, InterfaceInfo, RxInfo, TxInfo } from "data_types.slint";
+import {DashboardSkin} from "dashboard_theme.slint";
+import { ScrollView } from "std-widgets.slint";
+
+
+
+component Dashboard inherits VerticalLayout {
+    in property <int> active-view;
+    in property <string> os-type;
+    in property <string> user;
+    in property <string> hostname;
+    in property <string> cpu-model;
+    in property <int> total-tasks;
+    in property <string> ram-usage;
+    in property <string> swap-usage;
+    in property <[ProcessData]> process-list;
+    in property <[InterfaceInfo]> interface-list;
+    in property <[RxInfo]> rx-table;
+    in property <[TxInfo]> tx-table;
+
+    callback refresh;
+
+    padding: 20px;
+    spacing: 20px;
+
+    property <[string]> titles: ["Dashboard", "System Information", "Memory Usage", "Processes", "Network"];
+
+    property <[string]> subtitles: [
+        "Overview of system resources",
+        "Basic system information",
+        "RAM and swap memory usage",
+        "Running processes",
+        "Network interfaces and traffic"
+    ];
+
+    // Header
+    Header {
+        title: titles[root.active-view];
+        subtitle: subtitles[root.active-view];
+        refresh => {
+            root.refresh();
+        }
+    }
+
+    // Main Content
+    if (root.active-view == 0): GridLayout {
+        spacing: 20px;
+
+        // Ligne 1: System Info (à gauche) et Memory (au milieu)
+            Rectangle {
+            HorizontalLayout {
+                TasksMonitor {
+                    processes: root.process-list;
+                }
+
+                NetworkMonitor {
+                    interface-list: root.interface-list;
+                    rx-info: root.rx-table;
+                    tx-info: root.tx-table;
+                }
+                spacing: 10px;
+            }
+
+            height: 55%;
+            col: 0;
+            row: 1;
+        }
+
+        Rectangle {
+            ScrollView {
+                HorizontalLayout {
+                    SystemInfoMonitor {
+                        os-type: root.os-type;
+                        user: root.user;
+                        hostname: root.hostname;
+                        cpu-model: root.cpu-model;
+                        total-tasks: root.total-tasks;
+                    }
+
+                    spacing: 10px;
+                    MemoryMonitor {
+                        ram-usage: root.ram-usage;
+                        swap-usage: root.swap-usage;
+                    }
+                }
+            }
+
+            height: 350px;
+            row: 0;
+        }
+
+        // Rectangle {
+        //     MemoryMonitor {
+        //         ram-usage: root.ram-usage;
+        //         swap-usage: root.swap-usage;
+        //     }
+        //     height: 350px;
+        //     padding-top: 50px;
+        //     background: green;
+        //     row: 0;
+        //     col: 1;
+        // }
+
+
+        // Rectangle {
+        // // Network Monitor sur la droite
+        // NetworkMonitor {
+        //         interface-list: root.interface-list;
+        //         rx-info: root.rx-table;
+        //         tx-info: root.tx-table;
+        //     }
+        //     background: #2937A7;
+        //     row: 0;
+        //     col: 3;
+        // }
+    }
+
+    if (root.active-view == 1): SystemInfoMonitor {
+        os-type: root.os-type;
+        user: root.user;
+        hostname: root.hostname;
+        cpu-model: root.cpu-model;
+        total-tasks: root.total-tasks;
+    }
+
+    if (root.active-view == 2): MemoryMonitor {
+        ram-usage: root.ram-usage;
+        swap-usage: root.swap-usage;
+    }
+
+    if (root.active-view == 3): TasksMonitor {
+        processes: root.process-list;
+    }
+
+    if (root.active-view == 4): NetworkMonitor {
+        interface-list: root.interface-list;
+        rx-info: root.rx-table;
+        tx-info: root.tx-table;
+    }
+}
 
 export component AppWindow inherits Window {
-    min-width: 800px;
-    min-height: 600px;
+    min-width: 1024px;
+    min-height: 768px;
     title: "System Monitor";
+    background: DashboardSkin.palette.mainContent;
 
     callback refresh();
 
@@ -19,45 +159,40 @@ export component AppWindow inherits Window {
     in property <string> ram-usage: "0/0 MB";
     in property <string> swap-usage: "0/0 MB";
     in property <[InterfaceInfo]> interface-list;
+    in property <[RxInfo]> rx-table;
+    in property <[TxInfo]> tx-table;
+    in property <[ProcessData]> process-list;
 
-    in property <[ RxInfo]> rx-table;
-    in property <[ TxInfo]> tx-table;
+    property <int> active-view: 0;
 
     HorizontalLayout {
+        padding: 0;
+        spacing: 0;
 
-        VerticalBox {
-            GridLayout {
-                Rectangle {
-                    SystemInfoView {
-                        os-type: root.os-type;
-                        user: root.user;
-                        hostname: root.hostname;
-                        cpu-model: root.cpu-model;
-                        total-tasks: root.total-tasks;
-                    }
-                    col: 0;
-                }
-
-                Rectangle {
-                    MemoryView {
-                        ram-usage: root.ram-usage;
-                        swap-usage: root.swap-usage;
-                    }
-                    col: 1;
-                }
+        // Sidebar
+        Sidebar {
+            active-index <=> root.active-view;
+            menu-item-clicked(idx) => {
+                root.active-view = idx;
             }
+        }
 
-            Button {
-                text: "Refresh";
-                clicked => {
-                    root.refresh();
-                }
-            }
-
-            NetworkView {
-                interface-list: root.interface-list; // ← liaison
-                rx_list: root.rx-table;
-                tx_list: root.tx-table;
+        // Main Content
+        Dashboard {
+            active-view: root.active-view;
+            os-type: root.os-type;
+            user: root.user;
+            hostname: root.hostname;
+            cpu-model: root.cpu-model;
+            total-tasks: root.total-tasks;
+            ram-usage: root.ram-usage;
+            swap-usage: root.swap-usage;
+            process-list: root.process-list;
+            interface-list: root.interface-list;
+            rx-table: root.rx-table;
+            tx-table: root.tx-table;
+            refresh => {
+                root.refresh();
             }
         }
     }

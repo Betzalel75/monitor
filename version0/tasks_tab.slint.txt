@@ -1,0 +1,80 @@
+import { VerticalBox, GroupBox, ScrollView } from "std-widgets.slint";
+
+export struct ProcessData {
+    pid: string,
+    name: string,
+    state: string,
+    cpu: string,
+    memory: string,
+}
+
+export component TasksView {
+    in property <[ProcessData]> processes;
+    property <int> total: processes.length;
+    
+    property <[string]> headers: [
+        "PID",
+        "Name",
+        "State",
+        "CPU %",
+        "Memory %",
+    ];
+
+    VerticalBox {
+        GroupBox {
+            title: "Processes: " + total;
+            
+            ScrollView {
+                VerticalBox {
+                    // En-têtes
+                    HorizontalLayout {
+                        padding: 10px;
+                        padding-left: 0px;
+                        spacing: 0px;
+                        for header-text in headers: Text {
+                            text: header-text;
+                            horizontal-alignment: center;
+                            width: 150px;
+                            font-weight: 700;
+                        }
+                    }
+
+                    // Liste des processus
+                    VerticalLayout {
+                        padding-top: 10px;
+                        spacing: 5px;
+                        for process in processes: GridLayout {
+                            Row {
+                                Text {
+                                    text: process.pid;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                                Text {
+                                    text: process.name;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                                Text {
+                                    text: process.state;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                                Text {
+                                    text: process.cpu;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                                Text {
+                                    text: process.memory;
+                                    horizontal-alignment: center;
+                                    width: 150px;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
