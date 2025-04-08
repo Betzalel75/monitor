@@ -1,5 +1,5 @@
 
-
+#[derive(Clone)]
 pub struct ProcessInfo {
     pub pid: u32,
     pub name: String,
@@ -32,7 +32,7 @@ impl Default for TaskStats {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct ProcessList{
     pub tasks: Vec<ProcessInfo>,
     pub total_tasks: u32

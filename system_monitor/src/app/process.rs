@@ -67,6 +67,11 @@ impl ProcessList {
         let total_tasks = tasks.len() as u32;
         Self { tasks , total_tasks }
     }
+    pub fn update(&mut self){
+        let new_tasks = get_tasks();
+        self.total_tasks = new_tasks.len() as u32;
+        self.tasks = new_tasks;
+    }
 }
 
 impl ToString for TaskStats {

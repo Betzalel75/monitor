@@ -1,14 +1,16 @@
+#[allow(warnings)]
+use log::{info, warn};
 use slint::{SharedString, Timer};
-use system_monitor::models::process::ProcessList;
 use std::time::Duration;
 use std::{cell::RefCell, error::Error, rc::Rc};
 use system_monitor::models::network::InterfaceStats;
+use system_monitor::models::process::ProcessList;
 use system_monitor::models::{memory::MemoryInfo, system::SystemInfo};
 use system_monitor::utils::formater::{convert_memory_size, format_memory_size};
 
 slint::include_modules!();
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct AppState {
     system_info: SystemInfo,
     memory_info: MemoryInfo,
@@ -20,8 +22,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let app_state = Rc::new(RefCell::new(AppState::default()));
     let ui = AppWindow::new()?;
     env_logger::builder()
-            .filter_level(log::LevelFilter::Info)
-            .init();
+        .filter_level(log::LevelFilter::Info)
+        .init();
 
     // Initialisation
     {
@@ -34,39 +36,92 @@ fn main() -> Result<(), Box<dyn Error>> {
         state.memory_info.update();
         state.network_info = InterfaceStats::new();
         state.network_info.initialize();
-        // info!("{:?}", state.network_info);
     }
 
     // Gestionnaire de rafraîchissement
-    let ui_handle = ui.as_weak();
-    let app_state_refresh = app_state.clone();
-    ui.on_refresh(move || {
-        let ui = ui_handle.unwrap();
-        let mut state = app_state_refresh.borrow_mut();
-        // Mise à jour des données
-        state.memory_info.update();
-        state.network_info.update();
+    let _ui_handle = ui.as_weak();
+    let _app_state_refresh = app_state.clone();
 
-        // Mise à jour de l'interface
-        update_ui(&ui, &state);
-    });
+    ui.on_refresh({
+        let ui_handle = ui.as_weak();
+        let app_state_refresh = app_state.clone();
 
-    // Timer pour les mises à jour automatiques
-    let ui_handle = ui.as_weak();
-    Timer::default().start(
-        slint::TimerMode::Repeated,
-        Duration::from_secs(3),
         move || {
             if let Some(ui) = ui_handle.upgrade() {
-                ui.invoke_refresh();
+                // On met à jour les données pendant que le RefCell est mutable
+                {
+                    let state_copy = {
+                        if let Ok(mut state) = app_state_refresh.try_borrow_mut() {
+                            state.memory_info.update();
+                            state.network_info.update();
+                            state.processes.update();
+                            let total_tasks = state.processes.total_tasks;
+                            state.system_info.set_tastks(total_tasks);
+
+                            Some(AppState {
+                                system_info: state.system_info.clone(),
+                                memory_info: state.memory_info.clone(),
+                                network_info: state.network_info.clone(),
+                                processes: state.processes.clone(),
+                            })
+                        } else {
+                            warn!("Conflit de borrow_mut lors du refresh UI");
+                            None
+                        }
+                    };
+
+                    // Mise à jour de l’UI (hors emprunt)
+                    if let Some(state) = state_copy {
+                        update_ui(&ui, &state);
+                    }
+                }
             }
-        },
-    );
+        }
+    });
+
+    // ✅ Rafraîchissement automatique avec Timer persistant
+    let timer = Rc::new(Timer::default());
+    {
+        let ui_handle = ui.as_weak();
+        let app_state_timer = app_state.clone();
+        let timer_clone = timer.clone();
+
+        timer.start(
+            slint::TimerMode::Repeated,
+            Duration::from_secs(3),
+            move || {
+                if let Some(ui) = ui_handle.upgrade() {
+                    if let Ok(mut state) = app_state_timer.try_borrow_mut() {
+                        state.memory_info.update();
+                        state.network_info.update();
+                        state.processes.update();
+                        let total_tasks = state.processes.total_tasks;
+                        state.system_info.set_tastks(total_tasks);
+
+                        let state_copy = AppState {
+                            system_info: state.system_info.clone(),
+                            memory_info: state.memory_info.clone(),
+                            network_info: state.network_info.clone(),
+                            processes: state.processes.clone(),
+                        };
+                        update_ui(&ui, &state_copy);
+                    } else {
+                        warn!("Conflit de borrow_mut lors du timer");
+                    }
+                }
+            },
+        );
+
+        // empêche le timer d’être drop immédiatement
+        std::mem::forget(timer_clone);
+    }
 
     // Mise à jour initiale
-    let state = app_state.borrow();
-    update_ui(&ui, &state);
-
+    {
+        // Bloc pour emprunt immuable initial
+        let state = app_state.borrow();
+        update_ui(&ui, &state);
+    } // Emprunt immuable libéré
     ui.run()?;
     Ok(())
 }
@@ -140,16 +195,17 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     ui.set_tx_table(ModelRc::new(VecModel::from(tx_rows)));
     ui.set_interface_list(ModelRc::new(VecModel::from(interface_list)));
     let process_rows: Vec<ProcessData> = state
-            .processes.tasks
-            .iter()
-            .map(|process| ProcessData {
-                pid: process.pid.to_string().into(),
-                name: process.name.clone().into(),
-                state: process.state.to_string().into(),
-                cpu: format!("{:.1}%", process.cpu_usage * 100.0).into(),
-                memory: format!("{:.1}%", process.mem_usage * 100.0).into(),
-            })
-            .collect();
-    
-        ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
+        .processes
+        .tasks
+        .iter()
+        .map(|process| ProcessData {
+            pid: process.pid.to_string().into(),
+            name: process.name.clone().into(),
+            state: process.state.to_string().into(),
+            cpu: format!("{:.1}%", process.cpu_usage * 100.0).into(),
+            memory: format!("{:.1}%", process.mem_usage * 100.0).into(),
+        })
+        .collect();
+
+    ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
 }

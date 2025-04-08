@@ -1,4 +1,4 @@
-
+#[derive(Clone)]
 pub struct SystemInfo {
     pub os_type: String,
     pub user: String,
