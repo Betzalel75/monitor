@@ -49,10 +49,11 @@ component Dashboard inherits VerticalLayout {
     if (root.active-view == 0): GridLayout {
         spacing: 20px;
 
-        // Ligne 1: System Info (à gauche) et Memory (au milieu)
-            Rectangle {
+        Rectangle {
             HorizontalLayout {
                 TasksMonitor {
+                    horizontalSpace: 0px;
+                    height: 500px;
                     processes: root.process-list;
                 }
 
@@ -61,6 +62,7 @@ component Dashboard inherits VerticalLayout {
                     rx-info: root.rx-table;
                     tx-info: root.tx-table;
                 }
+
                 spacing: 10px;
             }
 
@@ -91,31 +93,6 @@ component Dashboard inherits VerticalLayout {
             height: 350px;
             row: 0;
         }
-
-        // Rectangle {
-        //     MemoryMonitor {
-        //         ram-usage: root.ram-usage;
-        //         swap-usage: root.swap-usage;
-        //     }
-        //     height: 350px;
-        //     padding-top: 50px;
-        //     background: green;
-        //     row: 0;
-        //     col: 1;
-        // }
-
-
-        // Rectangle {
-        // // Network Monitor sur la droite
-        // NetworkMonitor {
-        //         interface-list: root.interface-list;
-        //         rx-info: root.rx-table;
-        //         tx-info: root.tx-table;
-        //     }
-        //     background: #2937A7;
-        //     row: 0;
-        //     col: 3;
-        // }
     }
 
     if (root.active-view == 1): SystemInfoMonitor {
@@ -132,6 +109,8 @@ component Dashboard inherits VerticalLayout {
     }
 
     if (root.active-view == 3): TasksMonitor {
+        width: 89%;
+        horizontalSpace: 250px;
         processes: root.process-list;
     }
 

@@ -205,7 +205,7 @@ export component MemoryMonitor inherits DashboardBox {
 
                         Rectangle {
                             height: parent.height;
-                            width: 40%; // TODO: Calculate from swap-usage
+                            width: 4%; // TODO: Calculate from swap-usage
                             background: @linear-gradient(90deg, #FF5C00, #FF3122);
                             border-radius: 4px;
                         }
@@ -219,79 +219,89 @@ export component MemoryMonitor inherits DashboardBox {
 // Tasks Monitor Component
 export component TasksMonitor inherits DashboardBox {
     in property <[ProcessData]> processes;
+    in property <length> horizontalSpace;
     title: "Processes";
-    // height: 70%;
     VerticalLayout {
-        spacing: 10px;
-        height: 100%;
+        spacing: 0px;
+        // height: 100%;
 
         // Header
         Rectangle {
+            height: 40px; // Augmenter la hauteur pour une meilleure lisibilité
             background: DashboardSkin.palette.tableHeader;
             border-radius: 4px;
 
             HorizontalLayout {
                 padding: 10px;
-                padding-left: 16px;
+                padding-left: 20px;
+                spacing: horizontalSpace;
 
-                for header in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
+                for header[idx] in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
                     text: header;
-                    horizontal-alignment: left;
-                    font-size: DashboardSkin.SmallFont;
+                    horizontal-alignment: idx == 0 ? left : center;
+                    font-size: DashboardSkin.MediumFont;
                     font-weight: 700;
-                    width: header == "Name" ? 250px : 100px;
+                    color: DashboardSkin.palette.text; // Ajouter une couleur explicite
+                    width: header == "Name" ? 100px : 100px;
                 }
             }
         }
 
         // Process List
         ScrollView {
+            height: 740px;
             VerticalLayout {
                 spacing: 2px;
-                for process in processes: Rectangle {
-                    height: 32px;
-                    border-radius: 4px;
-                    background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(5%) : transparent;
+                for process[idx] in processes: Rectangle {
+                    height: 36px; // Augmenter légèrement la hauteur des lignes
+                    // width: 28px;
+                    border-radius: 0; // Pas de bordure arrondie pour chaque ligne
+                    // Ajouter une alternance de couleurs pour les lignes
+                    background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(10%) : 
+                    idx.mod(2) == 0 ? DashboardSkin.palette.box: DashboardSkin.palette.box.brighter(3%);
 
                     ta := TouchArea { }
 
                     HorizontalLayout {
                         padding: 8px;
-                        padding-left: 16px;
-
+                        padding-left: 20px;
+                        spacing: horizontalSpace;
                         Text {
                             text: process.pid;
                             horizontal-alignment: left;
                             width: 100px;
-                            font-size: DashboardSkin.SmallFont;
+                            font-size: DashboardSkin.MediumFont;
+                            color: DashboardSkin.palette.text;
                         }
 
                         Text {
                             text: process.name;
                             horizontal-alignment: left;
-                            width: 250px;
-                            font-size: DashboardSkin.SmallFont;
+                            width: 100px;
+                            font-size: DashboardSkin.MediumFont;
+                            color: DashboardSkin.palette.text;
                         }
 
                         Text {
                             text: process.state;
-                            horizontal-alignment: left;
+                            horizontal-alignment: center;
                             width: 100px;
-                            font-size: DashboardSkin.SmallFont;
+                            font-size: DashboardSkin.MediumFont;
+                            color: DashboardSkin.palette.text;
                         }
 
                         Text {
                             text: process.cpu;
-                            horizontal-alignment: left;
+                            horizontal-alignment: center;
                             width: 100px;
-                            font-size: DashboardSkin.SmallFont;
+                            font-size: DashboardSkin.MediumFont;
                         }
 
                         Text {
                             text: process.memory;
-                            horizontal-alignment: left;
+                            horizontal-alignment: center;
                             width: 100px;
-                            font-size: DashboardSkin.SmallFont;
+                            font-size: DashboardSkin.MediumFont;
                         }
                     }
                 }
