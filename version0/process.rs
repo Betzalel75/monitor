@@ -1,10 +1,10 @@
 use std::str::FromStr;
-
-use log::warn;
+#[allow(warnings)]
+use log::{info, warn};
 
 use crate::{
     models::process::{ProcessInfo, ProcessList, TaskStats},
-    utils::{get_tasks::get_tasks, process::get_accurate_process_info, read::read_file},
+    utils::{process::get_accurate_process_infos, get_tasks::get_tasks, read::read_file},
 };
 
 impl ProcessInfo {
@@ -33,16 +33,17 @@ impl ProcessInfo {
                         .unwrap_or(TaskStats::default());
                 }
             }
-        } else {
-            warn!("Pid: {} non trouvé", self.pid)
         }
-        // let pid = self.pid as i32;
-        match get_accurate_process_info(self.pid) {
+       
+        match get_accurate_process_infos(self.pid) {
             Some((cpu_usage, mem_usage)) => {
-                self.cpu_usage = cpu_usage;
-                self.mem_usage = mem_usage;
+                self.cpu_usage = cpu_usage as f32;
+                self.mem_usage = mem_usage as f32;
+                // info!("CPU {}% RAM {}%", self.cpu_usage, self.mem_usage);
             }
-            None => warn!("Error lors de la mise a jour du process {}", self.name),
+            _ => {
+                warn!("Erreur lors de la mise a jour")
+            }
         }
     }
 }
@@ -57,22 +58,6 @@ impl ProcessList {
         let new_tasks = get_tasks();
         self.total_tasks = new_tasks.len() as u32;
         self.tasks = new_tasks;
-    }
-    pub fn filter_by_name(&self, query: &str) -> Vec<ProcessInfo> {
-        if query.is_empty() {
-            // Retourner tous les processus si la requête est vide
-            return self.tasks.clone();
-        }
-
-        // Convertir la requête en minuscules pour une recherche insensible à la casse
-        let query = query.to_lowercase();
-
-        // Filtrer les processus dont le nom contient la requête
-        self.tasks
-            .iter()
-            .filter(|process| process.name.to_lowercase().contains(&query))
-            .cloned()
-            .collect()
     }
 }
 
@@ -116,5 +101,21 @@ impl FromStr for TaskStats {
             "U" => Ok(TaskStats::Uninterruptible),
             _ => Err(()),
         }
+    }
+}
+
+
+// Méthode pour obtenir tous les PIDs actifs
+pub fn get_all_pids() -> Vec<u32> {
+    if let Ok(cache) = SYSTEM_CACHE.lock() {
+        cache
+            .system
+            .processes()
+            .iter()
+            .map(|(pid, _)| pid.as_u32())
+            .collect()
+    } else {
+        warn!("Impossible d'acquérir le verrou sur la cache système pour lister les PIDs");
+        Vec::new()
     }
 }

@@ -1,9 +1,11 @@
 use std::{fs, path::Path};
 
 use crate::models::process::ProcessInfo;
+use super::process::refresh_all_processes;
 
 pub fn get_tasks() -> Vec<ProcessInfo> {
-    // Pour obtenir la liste de tous les processus :
+    // // Pour obtenir la liste de tous les processus :
+    if refresh_all_processes() {}
     let proc_dir = Path::new("/proc");
     let mut tasks = Vec::new();
 

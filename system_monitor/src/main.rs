@@ -202,8 +202,8 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
             pid: process.pid.to_string().into(),
             name: process.name.clone().into(),
             state: process.state.to_string().into(),
-            cpu: format!("{:.1}%", process.cpu_usage * 100.0).into(),
-            memory: format!("{:.1}%", process.mem_usage * 100.0).into(),
+            cpu: format!("{:.1}%", process.cpu_usage).into(),
+            memory: format!("{:.1}%", process.mem_usage).into(),
         })
         .collect();
 
