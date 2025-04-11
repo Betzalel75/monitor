@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use log::warn;
-
 use crate::{
     models::process::{ProcessInfo, ProcessList, TaskStats},
     utils::{
@@ -38,7 +36,7 @@ impl ProcessInfo {
                 }
             }
         } else {
-            warn!("Pid: {} non trouvé", self.pid)
+            return;
         }
         // let pid = self.pid as i32;
         match get_accurate_process_info(self.pid) {
@@ -46,7 +44,7 @@ impl ProcessInfo {
                 self.cpu_usage = cpu_usage;
                 self.mem_usage = mem_usage;
             }
-            None => warn!("Error lors de la mise a jour du process {}", self.name),
+            None => {},
         }
     }
 }

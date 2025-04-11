@@ -1,7 +1,9 @@
-
 use crate::{
     models::memory::MemoryInfo,
-    utils::{parser::parse_memory_line, read::read_file},
+    utils::{
+        parser::parse_memory_line,
+        read::{get_mount_usage, read_file},
+    },
 };
 
 impl MemoryInfo {
@@ -32,5 +34,8 @@ impl MemoryInfo {
                 }
             }
         }
+        // reccuperer les information sur le stockage
+        self.disk_total = get_mount_usage().0 as f32;
+        self.disk_used = get_mount_usage().1 as f32;
     }
 }

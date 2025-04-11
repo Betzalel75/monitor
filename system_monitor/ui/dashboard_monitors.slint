@@ -103,12 +103,11 @@ export component SystemInfoMonitor inherits DashboardBox {
 export component MemoryMonitor inherits DashboardBox {
     in property <string> ram-usage;
     in property <string> swap-usage;
+    in property <string> disk-usage;
     // --------------------------- //
     in property <int> ram-usagel;
     in property <int> swap-usagel;
-    pure function usage(total: length, use: length) -> length {
-        return ((use / total) * 100) * 1px;
-    }
+    in property <int> disk-usagel;
 
     title: "Memory Usage";
     height: 350px;
@@ -220,6 +219,63 @@ export component MemoryMonitor inherits DashboardBox {
                             background: @linear-gradient(90deg, #FF5C00, #FF3122);
                             border-radius: 4px;
                             x: 0px;
+                        }
+                        // Animation fluide
+                        animate width {
+                            duration: 300ms;
+                            easing: ease;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Disck Usage
+        VerticalLayout {
+            spacing: 8px;
+
+            Text {
+                text: "Disk";
+                font-size: DashboardSkin.MediumFont;
+                font-weight: 600;
+            }
+
+            HorizontalLayout {
+                spacing: 10px;
+
+                Rectangle {
+                    width: 45px;
+                    height: 45px;
+
+                    Image {
+                        source: @image-url("images/disk.svg");
+                        width: parent.width;
+                        height: parent.height;
+                        colorize: #67ff79;
+                    }
+                }
+
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 2px;
+
+                    Text {
+                        text: disk-usage;
+                        font-size: DashboardSkin.LargeFont;
+                        font-weight: 700;
+                        color: #67ff79;
+                    }
+
+                    Rectangle {
+                        height: 8px;
+                        background: #E0E0E0;
+                        border-radius: 4px;
+                        Rectangle {
+                            height: parent.height;
+                            width: (parent.width * min(root.disk-usagel / 100, 1));
+                            background: @linear-gradient(90deg, #67ff79, #14ba12);
+                            x: 0px;
+                            border-radius: 4px;
                         }
                         // Animation fluide
                         animate width {

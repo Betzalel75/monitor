@@ -16,9 +16,11 @@ component Dashboard inherits VerticalLayout {
     in property <int> total-tasks;
     in property <string> ram-usage;
     in property <string> swap-usage;
+    in property <string> disk-usage;
     // ------------------------------ //
     in property <int> ram-usagel;
     in property <int> swap-usagel;
+    in property <int> disk-usagel;
     // ----------------------------- //
     in property <[ProcessData]> process-list;
     in property <[InterfaceInfo]> interface-list;
@@ -98,6 +100,8 @@ component Dashboard inherits VerticalLayout {
                         swap-usage: root.swap-usage;
                         ram-usagel:root.ram-usagel;
                         swap-usagel: root.swap-usagel;
+                        disk-usage: root.disk-usage;
+                        disk-usagel: root.disk-usagel;
                     }
                 }
             }
@@ -120,6 +124,8 @@ component Dashboard inherits VerticalLayout {
         swap-usage: root.swap-usage;
         ram-usagel:root.ram-usagel;
         swap-usagel: root.swap-usagel;
+        disk-usage: root.disk-usage;
+        disk-usagel: root.disk-usagel;
     }
 
     if (root.active-view == 3): TasksMonitor {
@@ -157,10 +163,11 @@ export component AppWindow inherits Window {
     in property <int> total-tasks: 0;
     in property <string> ram-usage: "0/0 MB";
     in property <string> swap-usage: "0/0 MB";
+    in property <string> disk-usage:"0/0 MB";
     // ------------------------------ //
     in property <int> ram-usagel;
     in property <int> swap-usagel;
-    
+    in property <int> disk-usagel;
     // ----------------------------- //
     in property <[InterfaceInfo]> interface-list;
     in property <[RxInfo]> rx-table;
@@ -191,9 +198,11 @@ export component AppWindow inherits Window {
             total-tasks: root.total-tasks;
             ram-usage: root.ram-usage;
             swap-usage: root.swap-usage;
+            disk-usage: root.disk-usage;
             // ------------------------ //
             ram-usagel:root.ram-usagel;
             swap-usagel:root.swap-usagel;
+            disk-usagel: root.disk-usagel;
             // ------------------------ //
             process-list: root.process-list;
             interface-list: root.interface-list;

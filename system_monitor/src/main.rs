@@ -196,6 +196,12 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     ui.set_swap_usage(SharedString::from(swap_usage));
     ui.set_swap_usagel(usage_memory(state.memory_info.swap_total,state.memory_info.swap_used));
 
+    let sizing = 1024.0;
+    let disk_usage = format!("{}/{}",format_memory_size(state.memory_info.disk_used/sizing),
+    format_memory_size(state.memory_info.disk_total/sizing));
+    ui.set_disk_usage(SharedString::from(disk_usage));
+    ui.set_disk_usagel(usage_memory(state.memory_info.disk_total, state.memory_info.disk_used));
+
     use slint::ModelRc;
     use slint::VecModel;
 
