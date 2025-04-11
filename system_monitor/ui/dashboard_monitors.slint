@@ -1,4 +1,4 @@
-import { DashboardBox } from "dashboard_box.slint";
+import { DashboardBox, UsageBar } from "dashboard_box.slint";
 import { ProcessData, InterfaceInfo, RxInfo, TxInfo } from "data_types.slint";
 import { VerticalBox, GroupBox, TabWidget, StandardTableView, ScrollView } from "std-widgets.slint";
 import {DashboardSkin} from "dashboard_theme.slint";
@@ -106,7 +106,6 @@ export component MemoryMonitor inherits DashboardBox {
     // --------------------------- //
     in property <int> ram-usagel;
     in property <int> swap-usagel;
-    
     pure function usage(total: length, use: length) -> length {
         return ((use / total) * 100) * 1px;
     }
@@ -152,7 +151,6 @@ export component MemoryMonitor inherits DashboardBox {
                         font-weight: 700;
                         color: DashboardSkin.palette.highlight;
                     }
-                   
 
                     Rectangle {
                         height: 8px;
@@ -162,7 +160,7 @@ export component MemoryMonitor inherits DashboardBox {
                             height: parent.height;
                             width: (parent.width * min(root.ram-usagel / 100, 1));
                             background: @linear-gradient(90deg, #6776FF, #6100FF);
-                            x:0px;
+                            x: 0px;
                             border-radius: 4px;
                         }
                         // Animation fluide
@@ -221,7 +219,7 @@ export component MemoryMonitor inherits DashboardBox {
                             width: (parent.width * min(root.swap-usagel / 100, 1)); // TODO: Calculate from swap-usage
                             background: @linear-gradient(90deg, #FF5C00, #FF3122);
                             border-radius: 4px;
-                            x:0px;
+                            x: 0px;
                         }
                         // Animation fluide
                         animate width {
@@ -454,6 +452,26 @@ export component NetworkMonitor inherits DashboardBox {
     in property <[RxInfo]> rx-info;
     in property <[TxInfo]> tx-info;
 
+    pure function format_bytes(bytes: float) -> string {
+        if (bytes < 1024) {
+            return int(bytes) + "bytes/2Go";
+        } else if bytes < 1024 * 1024 {
+            return int(bytes / 1024) + "KB/2Go";
+        } else if bytes < 1024 * 1024 * 1024 {
+            return int(bytes / (1024 * 1024)) + "MB/2Go";
+        } else {
+            return int(bytes / (1024 * 1024 * 1024)) + "GB/2Go";
+        }
+    }
+
+    pure function int(f: float) -> int {
+        return f.round();
+    }
+
+    pure function data-usage(bytes: float) -> float {
+        return (bytes / 2000000000) * 100;
+    }
+
     title: "Network";
     ScrollView {
         height: 90%;
@@ -602,6 +620,12 @@ export component NetworkMonitor inherits DashboardBox {
                                         }
                                     }
                                 }
+                                // Visuel Graphique sur le trafique réseau
+                                for data in rx-info: UsageBar {
+                                    usage: format_bytes(data.rx-bytes);
+                                    data-usage: data-usage(data.rx-bytes);
+                                    name: data.name;
+                                }
                             }
                         }
                     }
@@ -712,6 +736,12 @@ export component NetworkMonitor inherits DashboardBox {
                                             width: 120px;
                                         }
                                     }
+                                }
+                                // Visuel Graphique sur le trafique réseau
+                                for data in tx-info: UsageBar {
+                                    usage: format_bytes(data.tx-bytes);
+                                    data-usage: data-usage(data.tx-bytes);
+                                    name: data.name;
                                 }
                             }
                         }

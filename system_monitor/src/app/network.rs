@@ -63,8 +63,8 @@ impl InterfaceStats {
                             let new_interface = Interface::new(
                                 interface_name,
                                 ip,
-                                rx_stats.bytes,
-                                tx_stats.bytes,
+                                rx_stats.bytes as u64,
+                                tx_stats.bytes as u64,
                                 Some(rx_stats),
                                 Some(tx_stats),
                             );
@@ -124,8 +124,8 @@ impl InterfaceStats {
                             if let Some(interface) = interface {
                                 interface.rx_stats = Some(rx_stats);
                                 interface.tx_stats = Some(tx_stats);
-                                interface.total_received = rx_stats.bytes;
-                                interface.total_transmitted = tx_stats.bytes;
+                                interface.total_received = rx_stats.bytes as u64;
+                                interface.total_transmitted = tx_stats.bytes as u64;
                             } else {
                                 // Create new interface with default IP (you might want to get the real IP)
                                 self.initialize();
@@ -141,7 +141,7 @@ impl InterfaceStats {
 impl Default for RxStats {
     fn default() -> Self {
         RxStats {
-            bytes: 0,
+            bytes: 0.0,
             packets: 0,
             errs: 0,
             drop: 0,
@@ -156,7 +156,7 @@ impl Default for RxStats {
 impl RxStats {
     fn from_slice(stats: &[&str]) -> Self {
         RxStats {
-            bytes: stats[0].parse().unwrap_or(0),
+            bytes: stats[0].parse().unwrap_or(0.0),
             packets: stats[1].parse().unwrap_or(0),
             errs: stats[2].parse().unwrap_or(0),
             drop: stats[3].parse().unwrap_or(0),
@@ -171,7 +171,7 @@ impl RxStats {
 impl Default for TxStats {
     fn default() -> Self {
         TxStats {
-            bytes: 0,
+            bytes: 0.0,
             packets: 0,
             errs: 0,
             drop: 0,
@@ -186,7 +186,7 @@ impl Default for TxStats {
 impl TxStats {
     fn from_slice(stats: &[&str]) -> Self {
         TxStats {
-            bytes: stats[0].parse().unwrap_or(0),
+            bytes: stats[0].parse().unwrap_or(0.0),
             packets: stats[1].parse().unwrap_or(0),
             errs: stats[2].parse().unwrap_or(0),
             drop: stats[3].parse().unwrap_or(0),

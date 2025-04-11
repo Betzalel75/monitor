@@ -2,7 +2,6 @@ import { DashboardSkin } from "dashboard_theme.slint";
 
 export component DashboardBox inherits Rectangle {
     in property <string> title;
-    
     background: DashboardSkin.palette.box;
     drop-shadow-offset-x: 4px;
     drop-shadow-offset-y: 4px;
@@ -10,19 +9,88 @@ export component DashboardBox inherits Rectangle {
     drop-shadow-color: DashboardSkin.palette.shadow;
     border-radius: 8px;
     clip: true;
-    
     VerticalLayout {
         padding: 15px;
         spacing: 12px;
         alignment: start;
 
-        if (root.title != "") : Text {
+        if (root.title != ""): Text {
             text: root.title;
             font-size: DashboardSkin.TitleFont;
             font-weight: 700;
             color: DashboardSkin.palette.text;
         }
-        
         @children
+    }
+}
+
+export component UsageBar inherits Rectangle {
+    // Propriétés configurables
+    in property <string> usage: "0.0Ko/2Go";
+    in property <float> data-usage:0.0;
+    in property <image> icon-path: @image-url("images/interface.svg");
+    in property <string> name:"";
+ 
+    // Implementation
+    VerticalLayout {
+        spacing: 2px;
+ 
+        // Titre
+        Text {
+            text: name;
+            font-size: DashboardSkin.MediumFont;
+            font-weight: 600;
+            color: DashboardSkin.palette.text;
+        }
+ 
+        // Contenu principal
+        HorizontalLayout {
+            spacing: 10px;
+ 
+            // Icône
+            Rectangle {
+                width: 45px;
+                height: 45px;
+                Image {
+                    source: icon-path;
+                    width: parent.width;
+                    height: parent.height;
+                    colorize: DashboardSkin.palette.highlight;
+                }
+            }
+ 
+            // Texte et barre de progression
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+ 
+                // Pourcentage
+                Text {
+                    text: usage;
+                    font-size: DashboardSkin.LargeFont;
+                    font-weight: 700;
+                    color: DashboardSkin.palette.highlight;
+                }
+ 
+                // Barre de progression
+                Rectangle {
+                    height: 8px;
+                    width: 100%;
+                    background: #E0E0E0;
+                    border-radius: 4px;
+                    Rectangle {
+                        height: parent.height;
+                        width: (parent.width * min(data-usage / 100, 1));
+                        background: @linear-gradient(90deg, #6776FF, #6100FF);
+                        x: 0px;
+                        border-radius: 4px;
+                        animate width {
+                            duration: 300ms;
+                            easing: ease;
+                        }
+                    }
+                }
+            }
+        }
     }
 }

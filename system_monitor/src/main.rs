@@ -215,7 +215,7 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
 
             rx_rows.push(RxInfo {
                 name: name.clone(),
-                rx_bytes: rx.bytes.to_string().into(),
+                rx_bytes: rx.bytes.into(),
                 rx_packets: rx.packets.to_string().into(),
                 rx_errors: rx.errs.to_string().into(),
                 rx_drops: rx.drop.to_string().into(),
@@ -227,7 +227,7 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
 
             tx_rows.push(TxInfo {
                 name,
-                tx_bytes: tx.bytes.to_string().into(),
+                tx_bytes: tx.bytes.into(),
                 tx_packets: tx.packets.to_string().into(),
                 tx_errors: tx.errs.to_string().into(),
                 tx_drops: tx.drop.to_string().into(),

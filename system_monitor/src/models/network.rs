@@ -2,7 +2,7 @@ use std::net::Ipv4Addr;
 
 #[derive(Debug, Clone, Copy)]
 pub struct RxStats {
-    pub bytes: u64,
+    pub bytes: f32,
     pub packets: u64,
     pub errs: u64,
     pub drop: u64,
@@ -14,7 +14,7 @@ pub struct RxStats {
 
 #[derive(Debug, Clone, Copy)]
 pub struct TxStats {
-    pub bytes: u64,
+    pub bytes: f32,
     pub packets: u64,
     pub errs: u64,
     pub drop: u64,
