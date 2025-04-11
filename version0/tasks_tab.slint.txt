@@ -8,6 +8,11 @@ export struct ProcessData {
     memory: string,
 }
 
+root.ram-usagel;
+root.ram-total;
+root.swap-usagel;
+root.swap-total;
+
 export component TasksView {
     in property <[ProcessData]> processes;
     property <int> total: processes.length;
@@ -78,3 +83,258 @@ export component TasksView {
         }
     }
 }
+
+
+ Tasks Monitor Component
+ export component TasksMonitor inherits DashboardBox {
+     in property <[ProcessData]> processes;
+     in property <length> horizontalSpace;
+     title: "Processes";
+     VerticalLayout {
+         spacing: 0px;
+         // height: 100%;
+         // Header
+         Rectangle {
+             height: 40px; // Augmenter la hauteur pour une meilleure lisibilité
+             background: DashboardSkin.palette.tableHeader;
+             border-radius: 4px;
+             HorizontalLayout {
+                 padding: 10px;
+                 padding-left: 20px;
+                 spacing: horizontalSpace;
+                 for header[idx] in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
+                     text: header;
+                     horizontal-alignment: idx == 0 ? left : center;
+                     font-size: DashboardSkin.MediumFont;
+                     font-weight: 700;
+                     color: DashboardSkin.palette.text; // Ajouter une couleur explicite
+                     width: header == "Name" ? 100px : 100px;
+                 }
+             }
+         }
+         // Process List
+         ScrollView {
+             height: 740px;
+             VerticalLayout {
+                 spacing: 2px;
+                 for process[idx] in processes: Rectangle {
+                     height: 36px; // Augmenter légèrement la hauteur des lignes
+                     // width: 28px;
+                     border-radius: 0; // Pas de bordure arrondie pour chaque ligne
+                     // Ajouter une alternance de couleurs pour les lignes
+                     background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(10%) :
+                     idx.mod(2) == 0 ? DashboardSkin.palette.box: DashboardSkin.palette.box.brighter(3%);
+                     ta := TouchArea { }
+                     HorizontalLayout {
+                         padding: 8px;
+                         padding-left: 20px;
+                         spacing: horizontalSpace;
+                         Text {
+                             text: process.pid;
+                             horizontal-alignment: left;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                             color: DashboardSkin.palette.text;
+                         }
+                         Text {
+                             text: process.name;
+                             horizontal-alignment: left;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                             color: DashboardSkin.palette.text;
+                         }
+                         Text {
+                             text: process.state;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                             color: DashboardSkin.palette.text;
+                         }
+                         Text {
+                             text: process.cpu;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                         }
+                         Text {
+                             text: process.memory;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                         }
+                     }
+                 }
+             }
+         }
+     }
+ }
+ export component TasksMonitor inherits DashboardBox {
+     in property <[ProcessData]> processes;
+     in property <length> horizontalSpace;
+     title: "Processes";
+     // Propriété pour stocker le texte de recherche
+     in-out property <string> search-query <=> input.text;
+     // Propriété calculée pour les processus filtrés
+     property <[ProcessData]> filtered-processes:processes;
+     
+     // private property <[ProcessData]> filtered-processes: {
+    //     if (root.search-query == "") {
+    //         return root.processes;
+    //     } else {
+    //         return search-changed(search-query);
+    //     }
+    // }
+     
+     VerticalLayout {
+         spacing: 10px;
+         // Champ de recherche
+         Rectangle {
+             height: 40px;
+             background: DashboardSkin.palette.box;
+             border-radius: 4px;
+             border-width: 1px;
+             border-color: DashboardSkin.palette.tableHeader;
+             HorizontalLayout {
+                 padding-left: 10px;
+                 padding-right: 10px;
+                 spacing: 10px;
+                 alignment: start;
+                 // Icône de recherche
+                 Image {
+                     source: @image-url("images/search.svg");
+                     width: 16px;
+                     height: 16px;
+                     colorize: DashboardSkin.palette.text.with-alpha(0.5);
+                 }
+                 // Champ de texte pour la recherche
+                 TextInput {
+                     font-size: DashboardSkin.SmallFont;
+                     horizontal-alignment: left;
+                     vertical-alignment: center;
+                     text <=> root.search-query;
+                 }
+                 // Bouton pour effacer le texte de recherche (visible uniquement quand il y a du texte)
+                 if (search-query != ""): Rectangle {
+                     width: 20px;
+                     height: 20px;
+                     border-radius: 10px;
+                     background: DashboardSkin.palette.tableHeader;
+                     Text {
+                         text: "×";
+                         color: DashboardSkin.palette.text;
+                         font-size: DashboardSkin.MediumFont;
+                         horizontal-alignment: center;
+                         vertical-alignment: center;
+                     }
+                     TouchArea {
+                         clicked => {
+                             root.search-query = "";
+                         }
+                     }
+                 }
+             }
+         }
+         // Header
+         Rectangle {
+             height: 40px; // Augmenter la hauteur pour une meilleure lisibilité
+             background: DashboardSkin.palette.tableHeader;
+             border-radius: 4px;
+             HorizontalLayout {
+                 padding: 10px;
+                 padding-left: 20px;
+                 spacing: horizontalSpace;
+                 for header[idx] in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
+                     text: header;
+                     horizontal-alignment: idx == 0 ? left : center;
+                     font-size: DashboardSkin.MediumFont;
+                     font-weight: 700;
+                     color: DashboardSkin.palette.text; // Ajouter une couleur explicite
+                     width: header == "Name" ? 100px : 100px;
+                 }
+             }
+         }
+         // Process List
+         ScrollView {
+             height: 690px; // Réduit pour tenir compte du champ de recherche
+             if (filtered-processes.length == 0): Rectangle {
+                 background: transparent;
+                 VerticalLayout {
+                     alignment: center;
+                     spacing: 10px;
+                     Image {
+                         source: @image-url("images/no-results.svg");
+                         width: 48px;
+                         height: 48px;
+                         colorize: DashboardSkin.palette.text.with-alpha(0.3);
+                     }
+                     Text {
+                         text: "No matching processes found";
+                         color: DashboardSkin.palette.text.with-alpha(0.5);
+                         font-size: DashboardSkin.MediumFont;
+                         horizontal-alignment: center;
+                     }
+                 }
+             }
+             VerticalLayout {
+                 spacing: 2px;
+                 for process[idx] in filtered-processes: Rectangle {
+                     height: 36px; // Augmenter légèrement la hauteur des lignes
+                     // width: 28px;
+                     border-radius: 0; // Pas de bordure arrondie pour chaque ligne
+                     // Ajouter une alternance de couleurs pour les lignes
+                     background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(10%) :
+                     idx.mod(2) == 0 ? DashboardSkin.palette.box: DashboardSkin.palette.box.brighter(3%);
+                     ta := TouchArea { }
+                     HorizontalLayout {
+                         padding: 8px;
+                         padding-left: 20px;
+                         spacing: horizontalSpace;
+                         Text {
+                             text: process.pid;
+                             horizontal-alignment: left;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                             color: DashboardSkin.palette.text;
+                         }
+                         Text {
+                             text: process.name;
+                             horizontal-alignment: left;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                         }
+                         Text {
+                             text: process.state;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                             color: DashboardSkin.palette.text;
+                         }
+                         Text {
+                             text: process.cpu;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                         }
+                         Text {
+                             text: process.memory;
+                             horizontal-alignment: center;
+                             width: 100px;
+                             font-size: DashboardSkin.MediumFont;
+                         }
+                     }
+                 }
+             }
+         }
+         // Informations sur les résultats de recherche
+         if (search-query != ""): Rectangle {
+             height: 30px;
+             background: transparent;
+             Text {
+                 text: "Showing " + filtered-processes.length + " of " + processes.length + " processes";
+                 color: DashboardSkin.palette.text.with-alpha(0.7);
+                 font-size: DashboardSkin.SmallFont;
+                 horizontal-alignment: right;
+             }
+         }
+     }
+ }

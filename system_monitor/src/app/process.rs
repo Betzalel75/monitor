@@ -4,7 +4,11 @@ use log::warn;
 
 use crate::{
     models::process::{ProcessInfo, ProcessList, TaskStats},
-    utils::{get_tasks::get_tasks, process::get_accurate_process_info, read::read_file},
+    utils::{
+        get_tasks::get_tasks,
+        process::{get_accurate_process_info, refresh_specific_processes},
+        read::read_file,
+    },
 };
 
 impl ProcessInfo {
@@ -59,20 +63,25 @@ impl ProcessList {
         self.tasks = new_tasks;
     }
     pub fn filter_by_name(&self, query: &str) -> Vec<ProcessInfo> {
-        if query.is_empty() {
-            // Retourner tous les processus si la requête est vide
-            return self.tasks.clone();
-        }
+        let filtered = if query.is_empty() {
+            self.tasks.clone()
+        } else {
+            let query = query.to_lowercase();
+            self.tasks
+                .iter()
+                .filter(|p| p.name.to_lowercase().contains(&query))
+                .cloned()
+                .collect()
+        };
 
-        // Convertir la requête en minuscules pour une recherche insensible à la casse
-        let query = query.to_lowercase();
-
-        // Filtrer les processus dont le nom contient la requête
-        self.tasks
+        // Rafraîchir tous les processus filtrés en une seule opération
+        let pids: Vec<_> = filtered
             .iter()
-            .filter(|process| process.name.to_lowercase().contains(&query))
-            .cloned()
-            .collect()
+            .map(|p| sysinfo::Pid::from_u32(p.pid))
+            .collect();
+        refresh_specific_processes(&pids);
+
+        filtered
     }
 }
 

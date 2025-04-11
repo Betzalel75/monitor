@@ -6,7 +6,7 @@ use std::{cell::RefCell, error::Error, rc::Rc};
 use system_monitor::models::network::InterfaceStats;
 use system_monitor::models::process::ProcessList;
 use system_monitor::models::{memory::MemoryInfo, system::SystemInfo};
-use system_monitor::utils::formater::{convert_memory_size, format_memory_size};
+use system_monitor::utils::formater::format_memory_size;
 
 slint::include_modules!();
 
@@ -16,6 +16,7 @@ struct AppState {
     memory_info: MemoryInfo,
     network_info: InterfaceStats,
     processes: ProcessList,
+    is_filtered: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -63,6 +64,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 memory_info: state.memory_info.clone(),
                                 network_info: state.network_info.clone(),
                                 processes: state.processes.clone(),
+                                is_filtered: false,
                             })
                         } else {
                             warn!("Conflit de borrow_mut lors du refresh UI");
@@ -75,6 +77,44 @@ fn main() -> Result<(), Box<dyn Error>> {
                         update_ui(&ui, &state);
                     }
                 }
+            }
+        }
+    });
+
+    // Gestionnaire pour la recherche de processus
+    ui.on_search({
+        let app_state_filter = app_state.clone();
+        let ui_handle = ui.as_weak();
+
+        move |query: slint::SharedString| -> slint::ModelRc<ProcessData> {
+            if let Ok(mut state) = app_state_filter.try_borrow_mut() {
+                if !query.trim().is_empty() {
+                    state.is_filtered =true;
+                }
+                let filtered = state.processes.filter_by_name(&query.to_string());
+
+                let process_rows: Vec<ProcessData> = filtered
+                    .iter()
+                    .map(|process| ProcessData {
+                        pid: process.pid.to_string().into(),
+                        name: process.name.clone().into(),
+                        state: process.state.to_string().into(),
+                        cpu: format!("{:.1}%", process.cpu_usage).into(),
+                        memory: format!("{:.1}%", process.mem_usage).into(),
+                    })
+                    .collect();
+
+                let model = slint::ModelRc::new(slint::VecModel::from(process_rows));
+
+                // Important: mettre à jour l'interface avec le nouveau modèle
+                if let Some(ui) = ui_handle.upgrade() {
+                    ui.set_process_list(model.clone());
+                }
+
+                model
+            } else {
+                // Retourner une liste vide en cas d'erreur
+                slint::ModelRc::new(slint::VecModel::from(Vec::<ProcessData>::new()))
             }
         }
     });
@@ -92,6 +132,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             move || {
                 if let Some(ui) = ui_handle.upgrade() {
                     if let Ok(mut state) = app_state_timer.try_borrow_mut() {
+                        if state.is_filtered {
+                            return;
+                        }
                         state.memory_info.update();
                         state.network_info.update();
                         state.processes.update();
@@ -103,6 +146,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             memory_info: state.memory_info.clone(),
                             network_info: state.network_info.clone(),
                             processes: state.processes.clone(),
+                            is_filtered: false,
                         };
                         update_ui(&ui, &state_copy);
                     } else {
@@ -134,18 +178,23 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     ui.set_total_tasks(state.system_info.total_tasks as i32);
 
     let ram_usage = format!(
-        "{:.2}/{}",
-        convert_memory_size(state.memory_info.ram_used),
+        "{}/{}",
+        format_memory_size(state.memory_info.ram_used),
         format_memory_size(state.memory_info.ram_total)
     );
+
+    
     ui.set_ram_usage(SharedString::from(ram_usage));
+    ui.set_ram_usagel(usage_memory(state.memory_info.ram_total, state.memory_info.ram_used));
+
 
     let swap_usage = format!(
-        "{:.2}/{}",
-        convert_memory_size(state.memory_info.swap_used),
+        "{}/{}",
+        format_memory_size(state.memory_info.swap_used),
         format_memory_size(state.memory_info.swap_total)
     );
     ui.set_swap_usage(SharedString::from(swap_usage));
+    ui.set_swap_usagel(usage_memory(state.memory_info.swap_total,state.memory_info.swap_used));
 
     use slint::ModelRc;
     use slint::VecModel;
@@ -208,4 +257,9 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
         .collect();
 
     ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
+}
+
+fn usage_memory(total:f32, usage: f32)->i32 {
+    let result = ((usage/total)*100.0)as i32;
+    result
 }

@@ -103,6 +103,13 @@ export component SystemInfoMonitor inherits DashboardBox {
 export component MemoryMonitor inherits DashboardBox {
     in property <string> ram-usage;
     in property <string> swap-usage;
+    // --------------------------- //
+    in property <int> ram-usagel;
+    in property <int> swap-usagel;
+    
+    pure function usage(total: length, use: length) -> length {
+        return ((use / total) * 100) * 1px;
+    }
 
     title: "Memory Usage";
     height: 350px;
@@ -145,17 +152,23 @@ export component MemoryMonitor inherits DashboardBox {
                         font-weight: 700;
                         color: DashboardSkin.palette.highlight;
                     }
+                   
 
                     Rectangle {
                         height: 8px;
                         background: #E0E0E0;
                         border-radius: 4px;
-
                         Rectangle {
                             height: parent.height;
-                            width: 80%; // TODO: Calculate from ram-usage
+                            width: (parent.width * min(root.ram-usagel / 100, 1));
                             background: @linear-gradient(90deg, #6776FF, #6100FF);
+                            x:0px;
                             border-radius: 4px;
+                        }
+                        // Animation fluide
+                        animate width {
+                            duration: 300ms;
+                            easing: ease;
                         }
                     }
                 }
@@ -205,9 +218,10 @@ export component MemoryMonitor inherits DashboardBox {
 
                         Rectangle {
                             height: parent.height;
-                            width: 4%; // TODO: Calculate from swap-usage
+                            width: (parent.width * min(root.swap-usagel / 100, 1)); // TODO: Calculate from swap-usage
                             background: @linear-gradient(90deg, #FF5C00, #FF3122);
                             border-radius: 4px;
+                            x:0px;
                         }
                     }
                 }
@@ -216,51 +230,158 @@ export component MemoryMonitor inherits DashboardBox {
     }
 }
 
-// Tasks Monitor Component
 export component TasksMonitor inherits DashboardBox {
     in property <[ProcessData]> processes;
     in property <length> horizontalSpace;
+    in property <string> search-query;
+    out property <string> current-query <=> input.text;
+    property <string> selected-pid: "";
+    property <string> selected-pida: "";
+    property <string> selected-pidb: "";
+       
+    // Callback pour notifier des changements
+    callback search-changed(string);
     title: "Processes";
     VerticalLayout {
-        spacing: 0px;
-        // height: 100%;
+        spacing: 10px;
+        
+        // Champ de recherche
+        Rectangle {
+            height: 40px;
+            background: DashboardSkin.palette.box;
+            border-radius: 4px;
+            border-width: 1px;
+            border-color: DashboardSkin.palette.tableHeader;
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 10px;
+                alignment: start;
+                Text {
+                    text: "🔍";
+                    font-size: DashboardSkin.MediumFont;
+                    vertical-alignment: center;
+                }
+                
+                // Champ de texte pour la recherche
+                input := TextInput {
+                    font-size: DashboardSkin.SmallFont;
+                    horizontal-alignment: left;
+                    vertical-alignment: center;
+                    // Déclencher la recherche quand le texte change
+                    edited => {
+                        root.search-changed(self.text);
+                    }
+                }
+                
+                // Bouton pour effacer le texte
+                if (current-query != ""): Rectangle {
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 10px;
+                    background: DashboardSkin.palette.tableHeader;
+                    Text {
+                        text: "×";
+                        color: DashboardSkin.palette.text;
+                        font-size: DashboardSkin.MediumFont;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
 
+                    TouchArea {
+                        clicked => {
+                            input.text = "";
+                            root.search-changed("");
+                        }
+                    }
+                }
+            }
+        }
+        
         // Header
         Rectangle {
-            height: 40px; // Augmenter la hauteur pour une meilleure lisibilité
+            height: 40px;
             background: DashboardSkin.palette.tableHeader;
             border-radius: 4px;
-
             HorizontalLayout {
                 padding: 10px;
                 padding-left: 20px;
                 spacing: horizontalSpace;
-
                 for header[idx] in ["PID", "Name", "State", "CPU %", "Memory %"]: Text {
                     text: header;
                     horizontal-alignment: idx == 0 ? left : center;
                     font-size: DashboardSkin.MediumFont;
                     font-weight: 700;
-                    color: DashboardSkin.palette.text; // Ajouter une couleur explicite
+                    color: DashboardSkin.palette.text;
                     width: header == "Name" ? 100px : 100px;
                 }
             }
         }
+        
+        // Message "Aucun résultat" si nécessaire
+        if (processes.length == 0 && current-query != ""): Rectangle {
+            height: 200px;
+            background: transparent;
+            VerticalLayout {
+                alignment: center;
+                spacing: 10px;
+                Text {
+                    Image {
+                        source: @image-url("images/no-results.svg");
+                        width: 50px;
+                        height: 50px;
+                    }
 
-        // Process List
+                    font-size: 32px;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    text: "No matching processes found";
+                    color: DashboardSkin.palette.text.with-alpha(0.5);
+                    font-size: DashboardSkin.MediumFont;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        
+        // Liste des processus
         ScrollView {
-            height: 740px;
+            height: 640px;
             VerticalLayout {
                 spacing: 2px;
                 for process[idx] in processes: Rectangle {
-                    height: 36px; // Augmenter légèrement la hauteur des lignes
-                    // width: 28px;
-                    border-radius: 0; // Pas de bordure arrondie pour chaque ligne
-                    // Ajouter une alternance de couleurs pour les lignes
-                    background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(10%) : 
-                    idx.mod(2) == 0 ? DashboardSkin.palette.box: DashboardSkin.palette.box.brighter(3%);
+                    height: 36px;
+                    border-radius: 0;
+                    // Détermine la couleur de fond en fonction de la sélection
+                    background: ta.has-hover ? DashboardSkin.palette.tableHeader.brighter(10%) : process.pid == root.selected-pid || process.pid == root.selected-pida || process.pid == root.selected-pidb ? DashboardSkin.palette.highlight.with-alpha(0.2) : idx.mod(2) == 0 ? DashboardSkin.palette.box : DashboardSkin.palette.box.brighter(3%);
 
-                    ta := TouchArea { }
+                    ta := TouchArea {
+                        clicked => {
+                            // Désélection si déjà sélectionné
+                            if (root.selected-pid == process.pid) {
+                                root.selected-pid = "";
+                            } else if (root.selected-pida == process.pid) {
+                                root.selected-pida = "";
+                            } else if (root.selected-pidb == process.pid) {
+                                root.selected-pidb = "";
+                            } else {
+                                // Ajouter à la première case vide
+                                if (root.selected-pid == "") {
+                                    root.selected-pid = process.pid;
+                                } else if (root.selected-pida == "") {
+                                    root.selected-pida = process.pid;
+                                } else if (root.selected-pidb == "") {
+                                    root.selected-pidb = process.pid;
+                                } else {
+                                    // Sinon, faire un remplacement FIFO simple
+                                    root.selected-pid = root.selected-pida;
+                                    root.selected-pida = root.selected-pidb;
+                                    root.selected-pidb = process.pid;
+                                }
+                            }
+                        }
+                    }
 
                     HorizontalLayout {
                         padding: 8px;
@@ -305,6 +426,18 @@ export component TasksMonitor inherits DashboardBox {
                         }
                     }
                 }
+            }
+        }
+        
+        // Compteur de résultats si une recherche est active
+        if (current-query != ""): Rectangle {
+            height: 30px;
+            background: transparent;
+            Text {
+                text: "Showing " + processes.length + " matching processes";
+                color: DashboardSkin.palette.text.with-alpha(0.7);
+                font-size: DashboardSkin.SmallFont;
+                horizontal-alignment: right;
             }
         }
     }

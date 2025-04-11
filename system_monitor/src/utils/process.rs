@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use sysinfo::System;
 
 // Cache global pour l'instance System
-struct SystemCache {
+pub struct SystemCache {
     system: System,
     last_refresh: Instant,
 }
@@ -19,7 +19,7 @@ impl SystemCache {
         }
     }
 
-    fn refresh_if_needed(&mut self) {
+    pub fn refresh_if_needed(&mut self) {
         // Rafraîchir si plus de 2 secondes se sont écoulées
         if self.last_refresh.elapsed() > Duration::from_secs(2) {
             self.system.refresh_all();
@@ -34,7 +34,7 @@ lazy_static::lazy_static! {
 
 pub fn get_accurate_process_info(current_pid: u32) -> Option<(f32, f32)> {
     let pid = sysinfo::Pid::from_u32(current_pid);
-
+    
     // Obtenir le verrou sur la cache
     let mut cache = match SYSTEM_CACHE.lock() {
         Ok(cache) => cache,
@@ -47,9 +47,8 @@ pub fn get_accurate_process_info(current_pid: u32) -> Option<(f32, f32)> {
         }
     };
 
-    // Rafraîchir si nécessaire
     cache.refresh_if_needed();
-
+    
     // Obtenir les informations sur le processus
     if let Some(process) = cache.system.process(pid) {
         let cpu_usage = process.cpu_usage();
@@ -75,3 +74,20 @@ pub fn refresh_all_processes() -> bool {
     }
 }
 
+pub fn refresh_specific_processes(pids: &[sysinfo::Pid]) -> bool {
+    if let Ok(mut cache) = SYSTEM_CACHE.lock() {
+        // Rafraîchir uniquement les processus spécifiés
+        cache.system.refresh_processes_specifics(
+            sysinfo::ProcessesToUpdate::Some(pids),
+            true, // supprimer les processus morts
+            sysinfo::ProcessRefreshKind::everything()
+                .with_cpu()
+                .with_memory(),
+        );
+        cache.last_refresh = Instant::now();
+        true
+    } else {
+        warn!("Impossible d'acquérir le verrou sur la cache système pour rafraîchir");
+        false
+    }
+}
