@@ -4,6 +4,7 @@ import { Header } from "header.slint";
 import { ProcessData, InterfaceInfo, RxInfo, TxInfo } from "data_types.slint";
 import {DashboardSkin} from "dashboard_theme.slint";
 import { ScrollView } from "std-widgets.slint";
+import { Cores, UsageDiagram } from "components/graphic_view.slint";
 
 
 
@@ -30,6 +31,9 @@ component Dashboard inherits VerticalLayout {
     callback process-search-changed(string) -> [ProcessData];
 
     callback refresh;
+    // --------CPU USAGE-------- //
+    in property <[Cores]> cpu-usage;
+    // ------------------------- //
 
     padding: 20px;
     spacing: 20px;
@@ -98,7 +102,7 @@ component Dashboard inherits VerticalLayout {
                     MemoryMonitor {
                         ram-usage: root.ram-usage;
                         swap-usage: root.swap-usage;
-                        ram-usagel:root.ram-usagel;
+                        ram-usagel: root.ram-usagel;
                         swap-usagel: root.swap-usagel;
                         disk-usage: root.disk-usage;
                         disk-usagel: root.disk-usagel;
@@ -111,18 +115,23 @@ component Dashboard inherits VerticalLayout {
         }
     }
 
-    if (root.active-view == 1): SystemInfoMonitor {
-        os-type: root.os-type;
-        user: root.user;
-        hostname: root.hostname;
-        cpu-model: root.cpu-model;
-        total-tasks: root.total-tasks;
+    if (root.active-view == 1): VerticalLayout {
+        SystemInfoMonitor {
+            os-type: root.os-type;
+            user: root.user;
+            hostname: root.hostname;
+            cpu-model: root.cpu-model;
+            total-tasks: root.total-tasks;
+        }
+        UsageDiagram {
+            datapoints: root.cpu-usage;
+        }
     }
 
     if (root.active-view == 2): MemoryMonitor {
         ram-usage: root.ram-usage;
         swap-usage: root.swap-usage;
-        ram-usagel:root.ram-usagel;
+        ram-usagel: root.ram-usagel;
         swap-usagel: root.swap-usagel;
         disk-usage: root.disk-usage;
         disk-usagel: root.disk-usagel;
@@ -175,6 +184,9 @@ export component AppWindow inherits Window {
     in property <[ProcessData]> process-list;
 
     property <int> active-view: 0;
+    // --------CPU USAGE-------- //
+    in property <[Cores]> cpu-usage;
+    // ------------------------- //
 
     HorizontalLayout {
         padding: 0;
@@ -196,12 +208,13 @@ export component AppWindow inherits Window {
             hostname: root.hostname;
             cpu-model: root.cpu-model;
             total-tasks: root.total-tasks;
+            cpu-usage: root.cpu-usage;
             ram-usage: root.ram-usage;
             swap-usage: root.swap-usage;
             disk-usage: root.disk-usage;
             // ------------------------ //
-            ram-usagel:root.ram-usagel;
-            swap-usagel:root.swap-usagel;
+            ram-usagel: root.ram-usagel;
+            swap-usagel: root.swap-usagel;
             disk-usagel: root.disk-usagel;
             // ------------------------ //
             process-list: root.process-list;

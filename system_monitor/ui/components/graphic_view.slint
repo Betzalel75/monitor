@@ -1,0 +1,266 @@
+import { Palette } from "std-widgets.slint";
+
+export struct Points {
+  a: float,
+  b: float,
+  c: float,
+  d: float,
+  e: float,
+  f: float,
+  g: float,
+  h: float,
+  i: float,
+}
+
+export struct Cores {
+  id: string,
+  values: Points
+}
+
+struct Palette  {
+  menuBar : brush,
+  mainContent : brush,
+  box : brush,
+  lightDisplay : brush,
+  pieChart : brush,
+  roundButton : brush,
+  weekdayBox : brush,
+  text : brush,
+  shadow : brush,
+}
+
+global Skin  {
+  in property <bool> day: Palette.color-scheme != ColorScheme.dark;
+  out property <Palette> palette : root.day ? {
+     menuBar : #6D7BFB,
+     mainContent :  #fbfbfb,
+     box :   #ffffff,
+     lightDisplay : #ffffff,
+     pieChart : #ffffff,
+     roundButton : #f7f7f7,
+     weekdayBox : #f4f4f4,
+     text : #000,
+     shadow : #0001, // ### added alpha
+  } : {
+     menuBar : #2937A7,
+     mainContent : #040404,
+     box : #000000,
+     lightDisplay : #000000,
+     pieChart : #000000,
+     roundButton : #0a0a0a,
+     weekdayBox : #0c0c0c,
+     text : #fff,
+     shadow : #fff1, // ### added alpha
+  };
+
+  out property <length> DefaultFont: 12px;
+  out property <length> TinyFont: 9px;
+  out property <length> TitleFont: 10px; // (also, bold)
+}
+
+component BoxBase inherits Rectangle {
+  // background: Skin.palette.box;
+  drop-shadow-offset-x: 6px;
+  drop-shadow-offset-y: 6px;
+  drop-shadow-blur: 6px;
+  // drop-shadow-color: Skin.palette.shadow;
+}
+
+component Box inherits BoxBase {
+  in property <string> title;
+
+  VerticalLayout {
+      if (root.title != "") : Text {
+          text <=> root.title;
+          font-size: Skin.TitleFont;
+          font-weight: 700;
+      }
+      spacing: 10px;
+      padding: 15px;
+
+      @children
+  }
+}
+
+export component UsageDiagram inherits Box {
+    in property <[color]> colors:[
+                              #6776ff, // bleu vif (cool mais punchy)
+                              #ff3122, // rouge intense
+                              #ff7d34, // orange chaud
+                              #ff4f81, // rose framboise vif
+                              #ffd700, // jaune doré éclatant
+                              #00b894, // vert turquoise
+                              #ffffff, // blanc pour contrast
+                              #9b59b6, // violet moyen
+                            ];
+    // in property <[Cores]> datapoints;
+
+in property <[Cores]> datapoints:[
+  { id: "Core 1",values: { a: 40, b: 55, c: 60, d: 50, e: 40, f:50, g: 75, h: 80, i: 100, j: 90 } },
+  { id: "Core 2",values: { a: 30, b: 15, c: 30, d: 40, e: 60, f: 10, g: 70, h: 20, i: 40, j: 45 } },
+  { id: "Core 3",values: { a: 60, b: 45, c: 60, d: 70, e: 10, f: 70, g: 20, h: 50, i: 20, j: 30 } }
+];
+
+  // WeekDayBox
+  boxes := HorizontalLayout {
+      padding: 0px;
+      padding-bottom: 6px;
+      spacing: 6px;
+
+      for _ in 7 : Rectangle {
+          background: Skin.palette.box;
+          drop-shadow-offset-x: 6px;
+          drop-shadow-offset-y: 6px;
+          drop-shadow-blur: 0px;
+          // drop-shadow-color: Skin.palette.weekdayBox;
+          min-height: 50px;
+      }
+
+  }
+
+  Rectangle {
+      // ### This is somehow a hack to have another rectangle on top of the boxes
+      height: 0;
+
+      VerticalLayout {
+          x:0;
+          y: -boxes.height;
+          height: boxes.height;
+          width: boxes.width;
+          padding: 0px;
+          spacing: 0px;
+
+          HorizontalLayout {
+              alignment: end;
+              spacing: 10px;
+              // CoreItem
+              for core[c] in root.datapoints : HorizontalLayout {
+                  spacing: 10px;
+                  padding-top: 10px;
+                  padding-right: 20px;
+
+                  VerticalLayout {
+                      padding: 0px;
+                      alignment: center;
+
+                      Rectangle {
+                          height: 8px;
+                          width: 9px;
+                          border-radius: 4px;
+                          background: root.colors[c];
+                      }
+                  }
+
+                  Text {
+                      text: core.id;
+                      horizontal-alignment: center;
+                      font-size: Skin.DefaultFont;
+                  }
+              }
+          }
+
+          Rectangle {
+              // The datapoint is
+              // FIXME: make it more curve, also fix the color
+              for datapoint[i] in root.datapoints : Path {
+                  opacity: 1;
+                  fill: @linear-gradient(180deg, colors[i], transparent 100%);
+                  viewbox-width: self.width/1px;
+                  viewbox-height: self.height/1px;
+
+                  MoveTo {
+                      x: 0;
+                      y: parent.viewbox-height;
+                  }
+
+                  LineTo {
+                      x: 0;
+                      y: parent.viewbox-height - datapoint.values.a / 100 * parent.viewbox-height;
+                  }
+
+                  QuadraticTo {
+                      x: 0.5/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.b / 100 * parent.viewbox-height;
+                      control-x: 0/7 * parent.viewbox-width;
+                      control-y: parent.viewbox-height - datapoint.values.b / 100 * parent.viewbox-height;
+                  }
+
+                  CubicTo {
+                      x: 1.5/7 * parent.viewbox-width;
+                      control-1-x: 1/7 * parent.viewbox-width;
+                      control-2-x: 1/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.c / 100 * parent.viewbox-height;
+                      control-1-y: parent.viewbox-height - datapoint.values.b / 100 * parent.viewbox-height;
+                      control-2-y: parent.viewbox-height - datapoint.values.c / 100 * parent.viewbox-height;
+                  }
+
+                  CubicTo {
+                      x: 3.5/7 * parent.viewbox-width;
+                      control-1-x: 3/7 * parent.viewbox-width;
+                      control-2-x: 3/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.e / 100 * parent.viewbox-height;
+                      control-1-y: parent.viewbox-height - datapoint.values.d / 100 * parent.viewbox-height;
+                      control-2-y: parent.viewbox-height - datapoint.values.e / 100 * parent.viewbox-height;
+                  }
+
+                  CubicTo {
+                      x: 4.5/7 * parent.viewbox-width;
+                      control-1-x: 4/7 * parent.viewbox-width;
+                      control-2-x: 4/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.f / 100 * parent.viewbox-height;
+                      control-1-y: parent.viewbox-height - datapoint.values.e / 100 * parent.viewbox-height;
+                      control-2-y: parent.viewbox-height - datapoint.values.f / 100 * parent.viewbox-height;
+                  }
+
+                  CubicTo {
+                      x: 5.5/7 * parent.viewbox-width;
+                      control-1-x: 5/7 * parent.viewbox-width;
+                      control-2-x: 5/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.g / 100 * parent.viewbox-height;
+                      control-1-y: parent.viewbox-height - datapoint.values.f / 100 * parent.viewbox-height;
+                      control-2-y: parent.viewbox-height - datapoint.values.g / 100 * parent.viewbox-height;
+                  }
+
+                  CubicTo {
+                      x: 6.5/7 * parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.h / 100 * parent.viewbox-height;
+                      control-1-x: 6/7 * parent.viewbox-width;
+                      control-1-y: parent.viewbox-height - datapoint.values.g / 100 * parent.viewbox-height;
+                      control-2-x: 6/7 * parent.viewbox-width;
+                      control-2-y: parent.viewbox-height - datapoint.values.h / 100 * parent.viewbox-height;
+                  }
+
+                  QuadraticTo {
+                      x: parent.viewbox-width;
+                      y: parent.viewbox-height - datapoint.values.i / 100 * parent.viewbox-height;
+                      control-x: 7/7 * parent.viewbox-width;
+                      control-y: parent.viewbox-height - datapoint.values.h / 100 * parent.viewbox-height;
+                  }
+
+                  LineTo {
+                      x: parent.viewbox-width;
+                      y: parent.viewbox-height;
+                  }
+
+                  LineTo {
+                      x: 0;
+                      y: parent.viewbox-height;
+                  }
+              }
+          }
+      }
+  }
+
+  HorizontalLayout {
+      padding: 0px;
+      padding-top: 5px;
+      // Time
+      for day in ["+1m", "1m", "50s", "40s", "30s", "20s", "10s"] : Text {
+          color: Skin.palette.text;
+          text: day;
+          font-size: Skin.TinyFont;
+          horizontal-alignment: center;
+      }
+
+  }
+}

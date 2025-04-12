@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::{cell::RefCell, error::Error, rc::Rc};
 use system_monitor::models::network::InterfaceStats;
 use system_monitor::models::process::ProcessList;
-use system_monitor::models::{memory::MemoryInfo, system::SystemInfo};
+use system_monitor::models::{cpu::CpuInfo, memory::MemoryInfo, system::SystemInfo};
 use system_monitor::utils::formater::format_memory_size;
 
 slint::include_modules!();
@@ -17,6 +17,7 @@ struct AppState {
     network_info: InterfaceStats,
     processes: ProcessList,
     is_filtered: bool,
+    cpu_usage: CpuInfo,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -37,6 +38,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         state.memory_info.update();
         state.network_info = InterfaceStats::new();
         state.network_info.initialize();
+        let model = state.system_info.cpu_model.clone();
+        state.cpu_usage = CpuInfo::new(model);
+        state.cpu_usage.update_stats();
     }
 
     // Gestionnaire de rafraîchissement
@@ -56,6 +60,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             state.memory_info.update();
                             state.network_info.update();
                             state.processes.update();
+                            state.cpu_usage.update_stats();
                             let total_tasks = state.processes.total_tasks;
                             state.system_info.set_tastks(total_tasks);
 
@@ -65,6 +70,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 network_info: state.network_info.clone(),
                                 processes: state.processes.clone(),
                                 is_filtered: false,
+                                cpu_usage: state.cpu_usage.clone(),
                             })
                         } else {
                             warn!("Conflit de borrow_mut lors du refresh UI");
@@ -89,7 +95,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         move |query: slint::SharedString| -> slint::ModelRc<ProcessData> {
             if let Ok(mut state) = app_state_filter.try_borrow_mut() {
                 if !query.trim().is_empty() {
-                    state.is_filtered =true;
+                    state.is_filtered = true;
                 }
                 let filtered = state.processes.filter_by_name(&query.to_string());
 
@@ -138,6 +144,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         state.memory_info.update();
                         state.network_info.update();
                         state.processes.update();
+                        state.cpu_usage.update_stats();
                         let total_tasks = state.processes.total_tasks;
                         state.system_info.set_tastks(total_tasks);
 
@@ -147,6 +154,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                             network_info: state.network_info.clone(),
                             processes: state.processes.clone(),
                             is_filtered: false,
+                            cpu_usage: state.cpu_usage.clone(),
                         };
                         update_ui(&ui, &state_copy);
                     } else {
@@ -183,10 +191,11 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
         format_memory_size(state.memory_info.ram_total)
     );
 
-    
     ui.set_ram_usage(SharedString::from(ram_usage));
-    ui.set_ram_usagel(usage_memory(state.memory_info.ram_total, state.memory_info.ram_used));
-
+    ui.set_ram_usagel(usage_memory(
+        state.memory_info.ram_total,
+        state.memory_info.ram_used,
+    ));
 
     let swap_usage = format!(
         "{}/{}",
@@ -194,13 +203,22 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
         format_memory_size(state.memory_info.swap_total)
     );
     ui.set_swap_usage(SharedString::from(swap_usage));
-    ui.set_swap_usagel(usage_memory(state.memory_info.swap_total,state.memory_info.swap_used));
+    ui.set_swap_usagel(usage_memory(
+        state.memory_info.swap_total,
+        state.memory_info.swap_used,
+    ));
 
     let sizing = 1024.0;
-    let disk_usage = format!("{}/{}",format_memory_size(state.memory_info.disk_used/sizing),
-    format_memory_size(state.memory_info.disk_total/sizing));
+    let disk_usage = format!(
+        "{}/{}",
+        format_memory_size(state.memory_info.disk_used / sizing),
+        format_memory_size(state.memory_info.disk_total / sizing)
+    );
     ui.set_disk_usage(SharedString::from(disk_usage));
-    ui.set_disk_usagel(usage_memory(state.memory_info.disk_total, state.memory_info.disk_used));
+    ui.set_disk_usagel(usage_memory(
+        state.memory_info.disk_total,
+        state.memory_info.disk_used,
+    ));
 
     use slint::ModelRc;
     use slint::VecModel;
@@ -208,6 +226,7 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     let mut rx_rows = Vec::new();
     let mut tx_rows = Vec::new();
     let mut interface_list = Vec::new();
+    let mut cpu_usage: Vec<Cores> = Vec::new();
 
     for interface in &state.network_info.interfaces {
         // Ajouter l'interface à la liste
@@ -244,6 +263,29 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
             });
         }
     }
+    for core in &state.cpu_usage.stats {
+        let history = if core.history.len() >= 10 {
+            &core.history[..10]
+        } else {
+            // Complétez avec des zéros si nécessaire
+            &core.history
+        };
+        // info!("{:?}", history);
+        cpu_usage.push(Cores {
+            id: core.id.clone().into(),
+            values: Points {
+                a: history.get(0).copied().unwrap_or(0.0),
+                b: history.get(1).copied().unwrap_or(0.0),
+                c: history.get(2).copied().unwrap_or(0.0),
+                d: history.get(3).copied().unwrap_or(0.0),
+                e: history.get(4).copied().unwrap_or(0.0),
+                f: history.get(5).copied().unwrap_or(0.0),
+                g: history.get(6).copied().unwrap_or(0.0),
+                h: history.get(7).copied().unwrap_or(0.0),
+                i: history.get(8).copied().unwrap_or(0.0),
+            },
+        });
+    }
 
     // Mettre à jour l'interface avec les modèles
     ui.set_rx_table(ModelRc::new(VecModel::from(rx_rows)));
@@ -263,9 +305,10 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
         .collect();
 
     ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
+    ui.set_cpu_usage(ModelRc::new(VecModel::from(cpu_usage)));
 }
 
-fn usage_memory(total:f32, usage: f32)->i32 {
-    let result = ((usage/total)*100.0)as i32;
+fn usage_memory(total: f32, usage: f32) -> i32 {
+    let result = ((usage / total) * 100.0) as i32;
     result
 }
