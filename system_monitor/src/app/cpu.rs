@@ -46,7 +46,7 @@ impl CpuInfo {
                     core_stat.update(usage);
                 } else {
                     self.stats
-                        .push(CoreStats::new(format!("Core {}", i + 1), usage));
+                        .push(CoreStats::new(format!("CPU{}", i + 1), usage));
                 }
             }
         }
@@ -123,7 +123,7 @@ impl CoreInfo {
             return 0.0;
         }
 
-        (delta_total - delta_idle) as f64 / delta_total as f64 * 100.0
+        ((delta_total - delta_idle) as f64 / delta_total as f64 * 100.0).floor().clamp(0.0, 100.0)
     }
 }
 
@@ -132,13 +132,13 @@ impl CoreStats {
         CoreStats {
             id,
             usage,
-            history: vec![0.0; 10], // Initialise avec 10 zéros
+            history: [0.0; 9], // Initialise avec 9 zéros
         }
     }
 
     fn update(&mut self, new_usage: f32) {
         self.usage = new_usage;
         self.history.copy_within(1.., 0); // Décalage des éléments 1.. vers 0..
-        self.history[9] = new_usage;
+        self.history[8] = new_usage;
     }
 }

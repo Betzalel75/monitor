@@ -1,10 +1,9 @@
-
 #[derive(Default, Clone)]
 pub struct CpuInfo {
     pub model: String,
     pub number_of_cores: u32,
     pub cores: Vec<CoreInfo>,
-    pub stats: Vec<CoreStats>
+    pub stats: Vec<CoreStats>,
 }
 
 #[derive(Default, Clone)]
@@ -24,5 +23,5 @@ pub struct CoreInfo {
 pub struct CoreStats {
     pub id: String,
     pub usage: f32,
-    pub history: Vec<f32>,  // Historique des 10 dernières valeurs
+    pub history: [f32; 9], // Historique des 9 dernières valeurs
 }

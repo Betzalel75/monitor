@@ -226,7 +226,25 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
     let mut rx_rows = Vec::new();
     let mut tx_rows = Vec::new();
     let mut interface_list = Vec::new();
-    let mut cpu_usage: Vec<Cores> = Vec::new();
+    let cpu_usage: Vec<Cores> = state
+        .cpu_usage
+        .stats
+        .iter()
+        .map(|core| Cores {
+            id: core.id.clone().into(),
+            values: Points {
+                a: core.history[0],
+                b: core.history[1],
+                c: core.history[2],
+                d: core.history[3],
+                e: core.history[4],
+                f: core.history[5],
+                g: core.history[6],
+                h: core.history[7],
+                i: core.history[8],
+            },
+        })
+        .collect();
 
     for interface in &state.network_info.interfaces {
         // Ajouter l'interface à la liste
@@ -263,30 +281,7 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
             });
         }
     }
-    for core in &state.cpu_usage.stats {
-        let history = if core.history.len() >= 10 {
-            &core.history[..10]
-        } else {
-            // Complétez avec des zéros si nécessaire
-            &core.history
-        };
-        // info!("{:?}", history);
-        cpu_usage.push(Cores {
-            id: core.id.clone().into(),
-            values: Points {
-                a: history.get(0).copied().unwrap_or(0.0),
-                b: history.get(1).copied().unwrap_or(0.0),
-                c: history.get(2).copied().unwrap_or(0.0),
-                d: history.get(3).copied().unwrap_or(0.0),
-                e: history.get(4).copied().unwrap_or(0.0),
-                f: history.get(5).copied().unwrap_or(0.0),
-                g: history.get(6).copied().unwrap_or(0.0),
-                h: history.get(7).copied().unwrap_or(0.0),
-                i: history.get(8).copied().unwrap_or(0.0),
-            },
-        });
-    }
-
+    
     // Mettre à jour l'interface avec les modèles
     ui.set_rx_table(ModelRc::new(VecModel::from(rx_rows)));
     ui.set_tx_table(ModelRc::new(VecModel::from(tx_rows)));
