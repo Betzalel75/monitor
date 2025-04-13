@@ -3,7 +3,7 @@ import { Sidebar } from "sidebar.slint";
 import { Header } from "header.slint";
 import { ProcessData, InterfaceInfo, RxInfo, TxInfo } from "data_types.slint";
 import {DashboardSkin} from "dashboard_theme.slint";
-import { ScrollView } from "std-widgets.slint";
+import { ScrollView, TabWidget, Slider, HorizontalBox, VerticalBox } from "std-widgets.slint";
 import { Cores, UsageDiagram } from "components/graphic_view.slint";
 
 
@@ -34,7 +34,13 @@ component Dashboard inherits VerticalLayout {
     // --------CPU USAGE-------- //
     in property <[Cores]> cpu-usage;
     // ------------------------- //
+    // ---------TIMER---------- //
+    in-out property <duration> total-time: 3s;
+    property <duration> refresh-interval: 3s;
+    callback refresh_interval_changed(duration); // appelé quand l’utilisateur change la valeur
 
+    // ----------------------- //
+    
     padding: 20px;
     spacing: 20px;
 
@@ -114,7 +120,7 @@ component Dashboard inherits VerticalLayout {
             row: 0;
         }
     }
-
+    
     if (root.active-view == 1): VerticalLayout {
         SystemInfoMonitor {
             os-type: root.os-type;
@@ -123,8 +129,41 @@ component Dashboard inherits VerticalLayout {
             cpu-model: root.cpu-model;
             total-tasks: root.total-tasks;
         }
-        UsageDiagram {
-            datapoints: root.cpu-usage;
+
+        VerticalBox {
+            slider := Slider {
+                maximum: 5s / 1s;
+                minimum: 500ms / 1s;
+                value: root.refresh-interval / 1s;
+                changed(new-duration) => {
+                    root.total-time = new-duration * 1s;
+                    root.refresh_interval_changed(root.total-time);
+                }
+            }
+            HorizontalBox {
+                padding: 0;
+                Text {
+                    text: "Duration: " + (root.total-time / 1s) + "s";
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        TabWidget {
+            Tab {
+                title: "CPU";
+                UsageDiagram {
+                    datapoints: root.cpu-usage;
+                }
+            }
+
+            Tab {
+                title: "Thermal";
+            }
+
+            Tab {
+                title: "Fan";
+            }
         }
     }
 
@@ -152,6 +191,7 @@ component Dashboard inherits VerticalLayout {
         rx-info: root.rx-table;
         tx-info: root.tx-table;
     }
+    
 }
 
 export component AppWindow inherits Window {
@@ -187,6 +227,11 @@ export component AppWindow inherits Window {
     // --------CPU USAGE-------- //
     in property <[Cores]> cpu-usage;
     // ------------------------- //
+    // ---------TIMER---------- //
+    in-out property <duration> total-time;
+    callback refresh_interval_changed(duration); // appelé quand l’utilisateur change la valeur
+
+
 
     HorizontalLayout {
         padding: 0;
@@ -217,7 +262,11 @@ export component AppWindow inherits Window {
             swap-usagel: root.swap-usagel;
             disk-usagel: root.disk-usagel;
             // ------------------------ //
+            total-time: root.total-time;
             process-list: root.process-list;
+            refresh_interval_changed(value) => {
+                root.refresh_interval_changed(value)
+            }
             interface-list: root.interface-list;
             rx-table: root.rx-table;
             tx-table: root.tx-table;

@@ -57,18 +57,18 @@ global Skin {
             out property <length> TitleFont: 10px; // (also, bold)
 }
 
-        component BoxBase inherits Rectangle {
-  background: Skin.palette.box;
-  drop-shadow-offset-x: 6px;
+component BoxBase inherits Rectangle {
+            background: Skin.palette.box;
+            drop-shadow-offset-x: 6px;
             drop-shadow-offset-y: 6px;
             drop-shadow-blur: 6px;
-  drop-shadow-color: Skin.palette.shadow;
-}
+            drop-shadow-color: Skin.palette.shadow;
+        }
 
 component Box inherits BoxBase {
-    in property <string> title;
+            in property <string> title;
 
-        VerticalLayout {
+            VerticalLayout {
                 if (root.title != ""): Text {
                     text <=> root.title;
                     font-size: Skin.TitleFont;
@@ -81,8 +81,8 @@ component Box inherits BoxBase {
             }
         }
 
-export component UsageDiagram inherits Box {
-in property <[color]> colors:[#6776ff, // bleu vif
+        export component UsageDiagram inherits Box {
+            in property <[color]> colors:[#6776ff, // bleu vif
                               #ff3122, // rouge intense
                               #ff7d34, // orange chaud
                               #ff4f81, // rose framboise vif
@@ -91,14 +91,13 @@ in property <[color]> colors:[#6776ff, // bleu vif
                               #ffffff, // blanc pour contrast
                               #9b59b6, // violet moyen
                             ];
-    // in property <[Cores]> datapoints;
 
-in property <[Cores]> datapoints:[
+            in property <[Cores]> datapoints:[
                 { id: "Core 1", values: { a: 40, b: 55, c: 60, d: 50, e: 40, f:50, g: 75, h: 80, i: 100 } },
                 { id: "Core 2", values: { a: 30, b: 15, c: 30, d: 40, e: 60, f: 10, g: 70, h: 20, i: 40 } },
                 { id: "Core 3", values: { a: 60, b: 45, c: 60, d: 70, e: 10, f: 70, g: 20, h: 50, i: 20 } }
             ];
-in property <float> scale-max: 100.0;
+            in property <float> scale-max: 100.0;
 
   // WeekDayBox
   boxes := HorizontalLayout {
@@ -111,8 +110,8 @@ in property <float> scale-max: 100.0;
                     drop-shadow-offset-x: 6px;
                     drop-shadow-offset-y: 6px;
                     drop-shadow-blur: 0px;
-          drop-shadow-color: Skin.palette.weekdayBox;
-          min-height: 50px;
+                    drop-shadow-color: Skin.palette.weekdayBox;
+                    min-height: 50px;
                 }
             }
 
@@ -132,8 +131,7 @@ in property <float> scale-max: 100.0;
                         alignment: end;
                         spacing: 10px;
                     // CoreItem
-                    for core[c] in root.datapoints:
-                        HorizontalLayout {
+                    for core[c] in root.datapoints: HorizontalLayout {
                             spacing: 10px;
                             padding-top: 10px;
                             padding-right: 20px;
@@ -151,16 +149,15 @@ in property <float> scale-max: 100.0;
                             }
 
                             Text {
-                                text: core.id +" "+ core.values.i +"%";
+                                text: core.id + " " + core.values.i + "%";
                                 horizontal-alignment: center;
                                 font-size: Skin.DefaultFont;
                             }
                         }
                     }
 
-                Rectangle {
-                    for datapoint[i] in root.datapoints:
-                        Path {
+                    Rectangle {
+                        for datapoint[i] in root.datapoints: Path {
                             opacity: 1;
                             fill: @linear-gradient(180deg, colors[i], transparent 100%);
                             viewbox-width: self.width / 1px;
@@ -253,12 +250,11 @@ in property <float> scale-max: 100.0;
                 padding: 0px;
                 padding-top: 5px;
                 // Time
-                for day in ["+1m", "1m", "50s", "40s", "30s", "20s", "10s"]:
-                 Text {
+                for day in ["+1m", "1m", "50s", "40s", "30s", "20s", "10s"]: Text {
                     color: Skin.palette.text;
                     text: day;
                     font-size: Skin.TinyFont;
                     horizontal-alignment: center;
                 }
             }
-}
+        }

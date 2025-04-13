@@ -46,6 +46,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Gestionnaire de rafraîchissement
     let _ui_handle = ui.as_weak();
     let _app_state_refresh = app_state.clone();
+    // Initialisation du timer avec une valeur par défaut
+    let timer = Rc::new(Timer::default());
+    let refresh_interval = Rc::new(RefCell::new(Duration::from_secs(3)));
 
     ui.on_refresh({
         let ui_handle = ui.as_weak();
@@ -86,6 +89,71 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     });
+
+     // Gestionnaire pour le changement d'intervalle
+     let timer_clone = timer.clone();
+     let refresh_interval_clone = refresh_interval.clone();
+     {
+        ui.on_refresh_interval_changed({
+            let timer = timer_clone.clone();
+            move |new_duration| {
+                *refresh_interval_clone.borrow_mut() = Duration::from_millis(new_duration as u64);
+                timer.stop();
+                timer.start(
+                    slint::TimerMode::Repeated,
+                    *refresh_interval_clone.borrow(),
+                    {
+                        let ui = _ui_handle.clone();
+                        let app_state = _app_state_refresh.clone();
+                        move || {
+                            if let Some(ui) = ui.upgrade() {
+                                if let Ok(mut state) = app_state.try_borrow_mut() {
+                                    state.cpu_usage.update_stats();
+    
+                                    let state_copy = AppState {
+                                        system_info: state.system_info.clone(),
+                                        memory_info: state.memory_info.clone(),
+                                        network_info: state.network_info.clone(),
+                                        processes: state.processes.clone(),
+                                        is_filtered: state.is_filtered,
+                                        cpu_usage: state.cpu_usage.clone(),
+                                    };
+                                    update_ui(&ui, &state_copy);
+                                }
+                            }
+                        }
+                    }
+                );
+            }
+        });
+     }
+
+      // Démarrage initial du timer
+    timer.start(
+        slint::TimerMode::Repeated,
+        *refresh_interval.borrow(),
+        {
+            let ui_handle = ui.as_weak();
+            let app_state_timer = app_state.clone();
+            move || {
+                if let Some(ui) = ui_handle.upgrade() {
+                    if let Ok(mut state) = app_state_timer.try_borrow_mut() {
+                        state.cpu_usage.update_stats();
+
+                        let state_copy = AppState {
+                            system_info: state.system_info.clone(),
+                            memory_info: state.memory_info.clone(),
+                            network_info: state.network_info.clone(),
+                            processes: state.processes.clone(),
+                            is_filtered: state.is_filtered,
+                            cpu_usage: state.cpu_usage.clone(),
+                        };
+                        update_ui(&ui, &state_copy);
+                    }
+                }
+            }
+        }
+    );
 
     // Gestionnaire pour la recherche de processus
     ui.on_search({
@@ -144,7 +212,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                         state.memory_info.update();
                         state.network_info.update();
                         state.processes.update();
-                        state.cpu_usage.update_stats();
+                        // state.cpu_usage.update_stats();
                         let total_tasks = state.processes.total_tasks;
                         state.system_info.set_tastks(total_tasks);
 
