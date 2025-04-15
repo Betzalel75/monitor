@@ -1,6 +1,7 @@
 #[allow(warnings)]
 use log::{info, warn};
 use slint::{SharedString, Timer};
+use system_monitor::models::sensors::{FanInfos, ThermalInfos};
 use std::time::Duration;
 use std::{cell::RefCell, error::Error, rc::Rc};
 use system_monitor::models::network::InterfaceStats;
@@ -18,6 +19,8 @@ struct AppState {
     processes: ProcessList,
     is_filtered: bool,
     cpu_usage: CpuInfo,
+    thermal_usage: ThermalInfos,
+    fan_usage: FanInfos,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -41,6 +44,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let model = state.system_info.cpu_model.clone();
         state.cpu_usage = CpuInfo::new(model);
         state.cpu_usage.update_stats();
+        state.thermal_usage = ThermalInfos::new();
+        state.thermal_usage.update();
+        state.fan_usage = FanInfos::new();
+        state.fan_usage.update();
     }
 
     // Gestionnaire de rafraîchissement
@@ -74,6 +81,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                                 processes: state.processes.clone(),
                                 is_filtered: false,
                                 cpu_usage: state.cpu_usage.clone(),
+                                thermal_usage: state.thermal_usage.clone(),
+                                fan_usage: state.fan_usage.clone(),
                             })
                         } else {
                             warn!("Conflit de borrow_mut lors du refresh UI");
@@ -109,6 +118,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                             if let Some(ui) = ui.upgrade() {
                                 if let Ok(mut state) = app_state.try_borrow_mut() {
                                     state.cpu_usage.update_stats();
+                                    state.fan_usage.update();
+                                    state.thermal_usage.update();
     
                                     let state_copy = AppState {
                                         system_info: state.system_info.clone(),
@@ -117,6 +128,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                                         processes: state.processes.clone(),
                                         is_filtered: state.is_filtered,
                                         cpu_usage: state.cpu_usage.clone(),
+                                        thermal_usage: state.thermal_usage.clone(),
+                                        fan_usage: state.fan_usage.clone(),
                                     };
                                     update_ui(&ui, &state_copy);
                                 }
@@ -138,6 +151,9 @@ fn main() -> Result<(), Box<dyn Error>> {
             move || {
                 if let Some(ui) = ui_handle.upgrade() {
                     if let Ok(mut state) = app_state_timer.try_borrow_mut() {
+                        if state.is_filtered {
+                            return;
+                        }
                         state.cpu_usage.update_stats();
 
                         let state_copy = AppState {
@@ -147,6 +163,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                             processes: state.processes.clone(),
                             is_filtered: state.is_filtered,
                             cpu_usage: state.cpu_usage.clone(),
+                            thermal_usage: state.thermal_usage.clone(),
+                            fan_usage: state.fan_usage.clone(),
                         };
                         update_ui(&ui, &state_copy);
                     }
@@ -223,6 +241,8 @@ fn main() -> Result<(), Box<dyn Error>> {
                             processes: state.processes.clone(),
                             is_filtered: false,
                             cpu_usage: state.cpu_usage.clone(),
+                            thermal_usage: state.thermal_usage.clone(),
+                            fan_usage: state.fan_usage.clone(),
                         };
                         update_ui(&ui, &state_copy);
                     } else {
@@ -313,6 +333,45 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
             },
         })
         .collect();
+    let fan_usage:Vec<Cores> = state
+        .fan_usage
+        .fans
+        .iter()
+        .map(|core| Cores {
+            id: core.id.clone().into(),
+            values: Points {
+                a: core.history[0],
+                b: core.history[1],
+                c: core.history[2],
+                d: core.history[3],
+                e: core.history[4],
+                f: core.history[5],
+                g: core.history[6],
+                h: core.history[7],
+                i: core.history[8],
+            },
+        })
+        .collect();
+    
+    let thermal_usage:Vec<Cores> = state
+        .thermal_usage
+        .thermals
+        .iter()
+        .map(|core| Cores {
+            id: core.id.clone().into(),
+            values: Points {
+                a: core.history[0],
+                b: core.history[1],
+                c: core.history[2],
+                d: core.history[3],
+                e: core.history[4],
+                f: core.history[5],
+                g: core.history[6],
+                h: core.history[7],
+                i: core.history[8],
+            },
+        })
+        .collect();
 
     for interface in &state.network_info.interfaces {
         // Ajouter l'interface à la liste
@@ -369,6 +428,8 @@ fn update_ui(ui: &AppWindow, state: &AppState) {
 
     ui.set_process_list(ModelRc::new(VecModel::from(process_rows)));
     ui.set_cpu_usage(ModelRc::new(VecModel::from(cpu_usage)));
+    ui.set_fan_usage(ModelRc::new(VecModel::from(fan_usage)));
+    ui.set_thermal_usage(ModelRc::new(VecModel::from(thermal_usage)));
 }
 
 fn usage_memory(total: f32, usage: f32) -> i32 {

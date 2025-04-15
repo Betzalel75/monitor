@@ -18,16 +18,3 @@ impl Default for SystemInfo {
         }
     }
 }
-
-
-pub struct FanInfo {
-    pub enabled: bool,
-    pub speed_rpm: u32,
-    pub level: u8,
-    pub speed_history: Vec<u32>,
-}
-
-pub struct ThermalInfo {
-    pub temperature_celsius: f32,
-    pub temp_history: Vec<f32>,
-}

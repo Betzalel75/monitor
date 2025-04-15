@@ -33,6 +33,8 @@ component Dashboard inherits VerticalLayout {
     callback refresh;
     // --------CPU USAGE-------- //
     in property <[Cores]> cpu-usage;
+    in property <[Cores]> thermal-usage;
+    in property <[Cores]> fan-usage;
     // ------------------------- //
     // ---------TIMER---------- //
     in-out property <duration> total-time: 3s;
@@ -159,10 +161,16 @@ component Dashboard inherits VerticalLayout {
 
             Tab {
                 title: "Thermal";
+                UsageDiagram {
+                    datapoints: root.thermal-usage;
+                }
             }
 
             Tab {
                 title: "Fan";
+                UsageDiagram {
+                    datapoints: root.fan-usage;
+                }
             }
         }
     }
@@ -226,6 +234,8 @@ export component AppWindow inherits Window {
     property <int> active-view: 0;
     // --------CPU USAGE-------- //
     in property <[Cores]> cpu-usage;
+    in property <[Cores]> thermal-usage;
+    in property <[Cores]> fan-usage;
     // ------------------------- //
     // ---------TIMER---------- //
     in-out property <duration> total-time;
@@ -254,6 +264,8 @@ export component AppWindow inherits Window {
             cpu-model: root.cpu-model;
             total-tasks: root.total-tasks;
             cpu-usage: root.cpu-usage;
+            thermal-usage: root.thermal-usage;
+            fan-usage: root.fan-usage;
             ram-usage: root.ram-usage;
             swap-usage: root.swap-usage;
             disk-usage: root.disk-usage;
