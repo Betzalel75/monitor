@@ -1,0 +1,122 @@
+import { VerticalBox, ListView, StandardTableView, ScrollView } from "std-widgets.slint";
+
+component TableViews inherits Rectangle {
+  in property <[string]> columns;
+  in property <[[string]]> values;
+
+  // Largeur par défaut
+  private property <length> e: self.width / root.columns.length;
+
+  // Taille des colonnes (manuelle, assez grande pour supporter jusqu’à 64 colonnes ici)
+  private property <[length]> column_sizes: [
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e,
+      root.e, root.e, root.e, root.e, root.e, root.e, root.e, root.e
+  ];
+
+  background: #121212;
+  border-width: 1px;
+  border-color: #444;
+
+  VerticalBox {
+      padding: 5px;
+
+      // En-têtes avec redimensionnement
+      HorizontalLayout {
+          spacing: 0px;
+          for title[idx] in root.columns: Rectangle {
+              width: root.column_sizes[idx];
+              height: 30px;
+              background: #2d2d2d;
+              border-width: 1px;
+              border-color: #444;
+
+              HorizontalLayout {
+                  spacing: 0px;
+
+                  Text {
+                      text: title;
+                      color: white;
+                      padding: 4px;
+                      vertical-alignment: center;
+                      horizontal-alignment: left;
+                  }
+
+                  Rectangle {
+                      width: 1px;
+                      background: #555;
+
+                      TouchArea {
+                          width: 10px;
+                          x: (parent.width - self.width) / 2;
+                          property <length> cached;
+                          pointer-event(event) => {
+                              if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                                  self.cached = root.column_sizes[idx];
+                              }
+                          }
+                          moved => {
+                              if (self.pressed) {
+                                  root.column_sizes[idx] += (self.mouse-x - self.pressed-x);
+                                  if (root.column_sizes[idx] < 30px) {
+                                      root.column_sizes[idx] = 30px;
+                                  }
+                              }
+                          }
+                          mouse-cursor: ew-resize;
+                      }
+                  }
+              }
+          }
+      }
+
+      // Données avec scroll
+      if (1==1) : ScrollView {
+          height: 100%;
+          ListView {
+              for row in root.values: HorizontalLayout {
+                  spacing: 0px;
+                  for val[idx] in row: Rectangle {
+                      width: root.column_sizes[idx];
+                      height: 30px;
+                      background: #1e1e1e;
+                      border-width: 1px;
+                      border-color: #444;
+
+                      Text {
+                          text: val;
+                          color: white;
+                          padding: 4px;
+                          vertical-alignment: center;
+                          horizontal-alignment: left;
+                      }
+                  }
+              }
+          }
+      }
+  }
+}
+
+export component Example inherits Window {
+  width: 600px;
+  height: 400px;
+  in property <[[string]]> datas:[
+    ["Disque 1", "/dev/sda1", "500GB", "120GB"],
+    ["Disque 2", "/home", "255GB", "32.2GB"],
+    ["Disque 3", "/data", "1TB", "856GB"],
+    ["Disque 4", "/mnt/backup", "2TB", "1.2TB"],
+    ["Disque 5", "/media", "128GB", "80GB"],
+    ["Disque 6", "/var", "256GB", "160GB"],
+    ["Disque 7", "/opt", "512GB", "400GB"]
+];
+
+  TableViews {
+      columns: ["Nom", "Chemin", "Taille", "Utilisé"];
+      values: datas;
+  }
+}
